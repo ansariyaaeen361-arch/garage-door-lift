@@ -12,7 +12,7 @@ npm install --omit=dev
 cd ..
 
 echo "==> Restarting service..."
-sudo systemctl restart garage-door-lift
+pm2 restart garage-door-lift
 
 echo "==> Done. Recent logs:"
-sudo journalctl -u garage-door-lift -n 20 --no-pager
+pm2 logs garage-door-lift --lines 20 --nostream
