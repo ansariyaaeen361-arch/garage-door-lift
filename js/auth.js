@@ -32,7 +32,7 @@
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async function () {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-      window.location.href = 'index.html';
+      window.location.href = '/';
     });
   }
 
@@ -63,7 +63,7 @@
         });
         const data = await res.json();
         if (!res.ok) return showError(signupError, data.error || 'Could not create your account.');
-        window.location.href = 'account.html';
+        window.location.href = '/account';
       } catch {
         showError(signupError, 'Could not reach the server. Is it running?');
       } finally {
@@ -95,7 +95,7 @@
         const data = await res.json();
         if (!res.ok) return showError(loginError, data.error || 'Could not sign you in.');
         var params = new URLSearchParams(window.location.search);
-        window.location.href = params.get('next') || 'account.html';
+        window.location.href = params.get('next') || '/account';
       } catch {
         showError(loginError, 'Could not reach the server. Is it running?');
       } finally {
@@ -110,7 +110,7 @@
     (async function loadAccount() {
       const user = await fetchMe();
       if (!user) {
-        window.location.href = 'login.html?next=account.html';
+        window.location.href = '/login?next=/account';
         return;
       }
       document.getElementById('account-name').textContent = user.name;

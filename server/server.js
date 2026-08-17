@@ -17,7 +17,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/builder', builderRoutes);
 
-app.use(express.static(SITE_ROOT));
+// Canonicalize: /page.html -> /page (redirect), so links/bookmarks settle on the clean URL.
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html')) {
+    const clean = req.path === '/index.html' ? '/' : req.path.slice(0, -'.html'.length);
+    const query = req.url.slice(req.path.length);
+    return res.redirect(301, clean + query);
+  }
+  next();
+});
+
+app.use(express.static(SITE_ROOT, { extensions: ['html'] }));
 
 app.listen(PORT, () => {
   console.log(`Garage Door Lift server running at http://localhost:${PORT}`);
