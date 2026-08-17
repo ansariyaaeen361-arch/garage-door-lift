@@ -1,0 +1,18 @@
+node_modules/
+server/node_modules/
+
+# runtime data — created automatically on first run, never commit
+server/data/app.db
+server/data/app.db-journal
+server/data/jwt-secret.txt
+server/data/builder-pdfs/
+
+# logs / OS junk
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# env files (if you ever add one)
+.env
+.env.*

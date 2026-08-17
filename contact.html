@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Request a Quote — Garage Door Lift</title>
+<meta name="description" content="Tell us the line, size and finish you need. Our team replies with pricing, lead time and availability.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="ticker">
+  <div class="ticker-track">
+    <span>27GA PRE-PAINTED GALVANIZED STEEL</span>◆<span>R-14.7 POLYURETHANE CORE</span>◆<span>5 RESIDENTIAL PRODUCT LINES</span>◆<span>U.S. MARKET CONFIGURED</span>◆<span>NO SWELLING FOAM TECHNOLOGY</span>◆<span>27GA PRE-PAINTED GALVANIZED STEEL</span>◆<span>R-14.7 POLYURETHANE CORE</span>◆<span>5 RESIDENTIAL PRODUCT LINES</span>◆<span>U.S. MARKET CONFIGURED</span>◆<span>NO SWELLING FOAM TECHNOLOGY</span>◆
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="header-row">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><img src="uploads/Untitled-design-2-e1784656485466.png" alt="Garage Door Lift"></span>
+      <span class="brand-tag">RESIDENTIAL SUPPLIER<strong>U.S. MARKET</strong></span>
+    </a>
+    <nav class="nav">
+      <a href="index.html" class="nav-link">HOME</a>
+      <a href="products.html" class="nav-link">PRODUCTS</a>
+      <a href="builder.html" class="nav-link">BUILD A DOOR</a>
+      <a href="about.html" class="nav-link">ABOUT</a>
+      <a href="contact.html" class="nav-link active">CONTACT</a>
+      <a href="login.html" class="nav-link auth-guest-only">LOGIN</a>
+      <a href="account.html" class="nav-link auth-user-only">MY ACCOUNT</a>
+    </nav>
+    <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
+    <a href="contact.html" class="btn btn-primary btn-notch request-quote-header">REQUEST A QUOTE</a>
+  </div>
+</header>
+
+<section class="section-tight" style="padding-bottom:0;">
+  <div class="wrap">
+    <div class="eyebrow">CONTACT</div>
+    <h1 class="section-title" style="font-size:clamp(42px,6vw,76px);margin-bottom:18px;">Request a quote</h1>
+    <p style="font-size:16px;color:var(--text-muted);max-width:600px;line-height:1.7;margin:0;">Tell us the line, size and finish you need. Our team replies with pricing, lead time and availability.</p>
+  </div>
+</section>
+
+<section style="padding:56px 0 90px 0;">
+  <div class="wrap contact-grid">
+    <div>
+      <div id="quote-success" class="form-success" style="display:none;">
+        <div class="form-success-title">Request received</div>
+        <p>Thanks — our team will follow up with pricing and availability shortly.</p>
+      </div>
+
+      <div id="quote-error" class="auth-error"></div>
+      <form id="quote-form" class="form">
+        <div class="form-row">
+          <div>
+            <label for="q-name">FULL NAME *</label>
+            <input id="q-name" name="name" type="text" required>
+          </div>
+          <div>
+            <label for="q-phone">PHONE *</label>
+            <input id="q-phone" name="phone" type="tel" required>
+          </div>
+        </div>
+        <div>
+          <label for="q-email">EMAIL</label>
+          <input id="q-email" name="email" type="email">
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="quote-product">PRODUCT LINE</label>
+            <select id="quote-product" name="product">
+              <option value="">Not sure yet</option>
+              <option value="Traditional Insulated Panel Doors">Traditional Insulated Panel Doors</option>
+              <option value="Modern Flush Doors">Modern Flush Doors</option>
+              <option value="Overlay Doors">Overlay Doors</option>
+              <option value="Glass Garage Doors">Glass Garage Doors</option>
+              <option value="Aluminum Grille Doors">Aluminum Grille Doors</option>
+            </select>
+          </div>
+          <div>
+            <label for="q-city">CITY / ZIP</label>
+            <input id="q-city" name="city" type="text">
+          </div>
+        </div>
+        <div>
+          <label for="q-message">PROJECT DETAILS</label>
+          <textarea id="q-message" name="message" rows="5"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:19px;font-size:15.5px;">SUBMIT REQUEST</button>
+      </form>
+    </div>
+
+    <div>
+      <div class="contact-info-card">
+        <div class="contact-info-head">DIRECT CONTACT</div>
+        <div class="info-row"><span class="k">PHONE</span><span>Available on request</span></div>
+        <div class="info-row"><span class="k">EMAIL</span><span>Available on request</span></div>
+        <div class="info-row"><span class="k">AREA</span><span>Available on request</span></div>
+      </div>
+      <div class="contact-media"><img src="assets/door-white-carriage.png" alt="Installed carriage-style garage door"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-mark"><img src="uploads/Untitled-design-2-e1784656485466.png" alt="Garage Door Lift"></div>
+        <div class="footer-desc">U.S.-based supplier of residential garage doors, hardware and accessories. Catalog listings only — contact us for pricing and orders.</div>
+      </div>
+      <div>
+        <div class="footer-head">PRODUCT LINES</div>
+        <a href="product-panel.html" class="footer-link">Insulated Panel</a>
+        <a href="product-flush.html" class="footer-link">Modern Flush</a>
+        <a href="product-overlay.html" class="footer-link">Overlay</a>
+        <a href="product-glass.html" class="footer-link">Glass</a>
+        <a href="product-grille.html" class="footer-link">Aluminum Grille</a>
+      </div>
+      <div>
+        <div class="footer-head">COMPANY</div>
+        <a href="index.html" class="footer-link">Home</a>
+        <a href="products.html" class="footer-link">Products</a>
+        <a href="about.html" class="footer-link">About</a>
+        <a href="contact.html" class="footer-link">Request a Quote</a>
+      </div>
+      <div>
+        <div class="footer-head">DETAILS</div>
+        <div class="footer-details">Phone: available on request<br>Email: available on request<br>Area: available on request</div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 GARAGE DOOR LIFT — ALL RIGHTS RESERVED</span>
+      <span>PRODUCT CATALOG SITE · NO ONLINE CHECKOUT</span>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

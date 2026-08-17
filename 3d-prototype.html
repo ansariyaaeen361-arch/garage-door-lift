@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Door Prototype — Garage Door Lift</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #1a1a1a; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+  #canvas-wrap { position: fixed; inset: 0; }
+  canvas { display: block; touch-action: none; }
+
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0; padding: 16px 20px; display: flex;
+    justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10;
+  }
+  #hud * { pointer-events: auto; }
+  #hud h1 { color: #fff; font-size: 15px; margin: 0 0 2px; letter-spacing: 0.02em; }
+  #hud p { color: #999; font-size: 11.5px; margin: 0; max-width: 380px; line-height: 1.4; }
+  .badge {
+    display: inline-block; background: #FEC400; color: #0b0b0b; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.08em; padding: 3px 8px; margin-bottom: 8px; text-transform: uppercase;
+  }
+
+  #controls {
+    position: fixed; bottom: 0; left: 0; right: 0; padding: 18px 20px 22px;
+    background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+    display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 10;
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .label { color: #999; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 4px; }
+
+  .swatch {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25);
+    cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease; padding: 0;
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.is-active { border-color: #FEC400; box-shadow: 0 0 0 2px rgba(254,196,0,0.35); }
+
+  .style-btn {
+    background: rgba(255,255,255,0.08); color: #ddd; border: 1px solid rgba(255,255,255,0.18);
+    padding: 8px 14px; font-size: 11.5px; letter-spacing: 0.04em; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .style-btn:hover { border-color: #FEC400; color: #fff; }
+  .style-btn.is-active { background: #FEC400; color: #0b0b0b; border-color: #FEC400; font-weight: 600; }
+
+  #loading {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #666; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; z-index: 5;
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-wrap"></div>
+<div id="loading">Loading 3D scene…</div>
+
+<div id="hud">
+  <div>
+    <div class="badge">Prototype — Live 3D, not a photo</div>
+    <h1>Insulated Panel — real-time 3D preview</h1>
+    <p>Drag to rotate, scroll to zoom. Color and panel style update instantly on the same live model — this is genuine WebGL rendering (Three.js, free/open-source), not a pre-made image.</p>
+  </div>
+</div>
+
+<div id="controls">
+  <div class="row">
+    <span class="label">Style</span>
+    <button class="style-btn is-active" data-style="cassette">Classic Cassette</button>
+    <button class="style-btn" data-style="carriage">Carriage</button>
+    <button class="style-btn" data-style="ranch">Raised Ranch</button>
+  </div>
+  <div class="row">
+    <span class="label">Color</span>
+    <button class="swatch is-active" data-color="#1a1a1a" style="background:#1a1a1a" title="Black"></button>
+    <button class="swatch" data-color="#f2f2ee" style="background:#f2f2ee" title="White"></button>
+    <button class="swatch" data-color="#cfc9b8" style="background:#cfc9b8" title="Almond"></button>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('canvas-wrap');
+const loading = document.getElementById('loading');
+
+// ---------- scene / renderer ----------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xd9d6cd);
+scene.fog = new THREE.Fog(0xd9d6cd, 14, 26);
+
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(3.4, 1.6, 6.2);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+wrap.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 3.5;
+controls.maxDistance = 11;
+controls.maxPolarAngle = Math.PI / 2 - 0.04;
+controls.target.set(0, 1.05, 0);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.1;
+
+// ---------- lighting ----------
+scene.add(new THREE.HemisphereLight(0xffffff, 0x55524a, 0.55));
+
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.55);
+sun.position.set(4, 6, 5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -4;
+sun.shadow.camera.right = 4;
+sun.shadow.camera.top = 4;
+sun.shadow.camera.bottom = -4;
+sun.shadow.bias = -0.0015;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0xcfe0ff, 0.35);
+fill.position.set(-5, 3, -3);
+scene.add(fill);
+
+// ---------- ground ----------
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(40, 40),
+  new THREE.MeshStandardMaterial({ color: 0xc7c2b6, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// A soft wall behind, so the door doesn't float in a void.
+const wall = new THREE.Mesh(
+  new THREE.PlaneGeometry(40, 20),
+  new THREE.MeshStandardMaterial({ color: 0xe4e1d8, roughness: 1 })
+);
+wall.position.set(0, 10, -3.2);
+wall.receiveShadow = true;
+scene.add(wall);
+
+// ---------- door ----------
+const DOOR_W = 3.2, DOOR_H = 2.1; // single-door-ish proportions, in meters
+let currentColor = 0x1a1a1a;
+let currentStyle = 'cassette';
+
+const material = new THREE.MeshStandardMaterial({ color: currentColor, roughness: 0.55, metalness: 0.06 });
+const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xe7e4da, roughness: 0.85 });
+
+const doorGroup = new THREE.Group();
+scene.add(doorGroup);
+
+// Trim frame around the opening — real doors always sit inside one, and it gives
+// the eye a scale/depth reference the flat 2D preview never had.
+const trimDepth = 0.12, trimWidth = 0.14;
+function addTrimBar(w, h, x, y) {
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, trimDepth), frameMaterial);
+  bar.position.set(x, y, -0.05);
+  bar.castShadow = true; bar.receiveShadow = true;
+  doorGroup.add(bar);
+}
+addTrimBar(DOOR_W + trimWidth * 2, trimWidth, 0, trimWidth / 2); // bottom sill sits at floor
+addTrimBar(trimWidth, DOOR_H + trimWidth, -DOOR_W / 2 - trimWidth / 2, DOOR_H / 2 + trimWidth / 2);
+addTrimBar(trimWidth, DOOR_H + trimWidth, DOOR_W / 2 + trimWidth / 2, DOOR_H / 2 + trimWidth / 2);
+addTrimBar(DOOR_W + trimWidth * 2, trimWidth, 0, DOOR_H + trimWidth / 2 + trimWidth / 2);
+
+let doorMeshGroup = null;
+
+function buildDoor(styleId) {
+  if (doorMeshGroup) { doorGroup.remove(doorMeshGroup); }
+  doorMeshGroup = new THREE.Group();
+
+  const baseDepth = 0.09;
+  const base = new THREE.Mesh(new THREE.BoxGeometry(DOOR_W, DOOR_H, baseDepth), material);
+  base.position.set(0, DOOR_H / 2, 0);
+  base.castShadow = true; base.receiveShadow = true;
+  doorMeshGroup.add(base);
+
+  const baseFrontZ = baseDepth / 2;
+
+  if (styleId === 'cassette') {
+    // Classic Cassette — 4x5 grid of raised rectangular panels, matching the real
+    // product's proportions (see js/builder.js's cassette pattern).
+    const cols = 4, rows = 5, gapX = 0.05, gapY = 0.045, inset = 0.05;
+    const cellW = (DOOR_W - gapX * (cols - 1)) / cols;
+    const cellH = (DOOR_H - gapY * (rows - 1)) / rows;
+    const raise = 0.045;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const w = cellW - inset * 2, h = cellH - inset * 2;
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(w, h, raise), material);
+        const x = -DOOR_W / 2 + cellW / 2 + c * (cellW + gapX);
+        const y = DOOR_H - cellH / 2 - r * (cellH + gapY);
+        panel.position.set(x, y, baseFrontZ + raise / 2);
+        panel.castShadow = true; panel.receiveShadow = true;
+        doorMeshGroup.add(panel);
+      }
+    }
+  } else if (styleId === 'ranch') {
+    // Raised Ranch — full-width horizontal raised bands, no vertical divisions.
+    const rows = 5, gapY = 0.05, inset = 0.05;
+    const cellH = (DOOR_H - gapY * (rows - 1)) / rows;
+    const raise = 0.05;
+    for (let r = 0; r < rows; r++) {
+      const h = cellH - inset * 2;
+      const band = new THREE.Mesh(new THREE.BoxGeometry(DOOR_W - inset * 2, h, raise), material);
+      const y = DOOR_H - cellH / 2 - r * (cellH + gapY);
+      band.position.set(0, y, baseFrontZ + raise / 2);
+      band.castShadow = true; band.receiveShadow = true;
+      doorMeshGroup.add(band);
+    }
+  } else if (styleId === 'carriage') {
+    // Carriage — vertical stiles + a diagonal crossbuck brace, the defining
+    // carriage-house look, built as real raised 3D geometry (not a texture).
+    const raise = 0.05, stileW = 0.09;
+    const n = 4;
+    for (let i = 1; i < n; i++) {
+      const x = -DOOR_W / 2 + (DOOR_W / n) * i;
+      const stile = new THREE.Mesh(new THREE.BoxGeometry(stileW, DOOR_H - 0.1, raise), material);
+      stile.position.set(x, DOOR_H / 2, baseFrontZ + raise / 2);
+      stile.castShadow = true; stile.receiveShadow = true;
+      doorMeshGroup.add(stile);
+    }
+    [0.06, DOOR_H - 0.06].forEach((y) => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(DOOR_W - 0.1, stileW, raise), material);
+      rail.position.set(0, y, baseFrontZ + raise / 2);
+      rail.castShadow = true; rail.receiveShadow = true;
+      doorMeshGroup.add(rail);
+    });
+    const braceLen = Math.hypot(DOOR_W - 0.2, DOOR_H - 0.2);
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(braceLen, stileW, raise), material);
+    brace.position.set(0, DOOR_H / 2, baseFrontZ + raise / 2);
+    brace.rotation.z = Math.atan2(DOOR_H - 0.2, DOOR_W - 0.2);
+    brace.castShadow = true; brace.receiveShadow = true;
+    doorMeshGroup.add(brace);
+    const brace2 = brace.clone();
+    brace2.rotation.z = -brace.rotation.z;
+    doorMeshGroup.add(brace2);
+
+    // hardware handle — small detail, big realism payoff
+    const handle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.02, 0.22, 12),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35, metalness: 0.6 })
+    );
+    handle.rotation.z = Math.PI / 2;
+    handle.position.set(DOOR_W / 2 - 0.35, DOOR_H / 2, baseFrontZ + raise + 0.03);
+    handle.castShadow = true;
+    doorMeshGroup.add(handle);
+  }
+
+  doorGroup.add(doorMeshGroup);
+}
+
+buildDoor(currentStyle);
+
+// ---------- interaction ----------
+document.querySelectorAll('.swatch').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.swatch').forEach((b) => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    currentColor = new THREE.Color(btn.dataset.color).getHex();
+    material.color.set(currentColor);
+  });
+});
+document.querySelectorAll('.style-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.style-btn').forEach((b) => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    currentStyle = btn.dataset.style;
+    buildDoor(currentStyle);
+  });
+});
+renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; }, { once: true });
+
+// ---------- resize + loop ----------
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+loading.style.display = 'none';
+animate();
+</script>
+</body>
+</html>

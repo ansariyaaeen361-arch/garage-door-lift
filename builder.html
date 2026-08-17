@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Door Builder — Garage Door Lift</title>
+<meta name="description" content="Design your own garage door across any of our 5 product lines — pick a line, size, model, style, color and windows, then request a quote.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="ticker">
+  <div class="ticker-track">
+    <span>27GA PRE-PAINTED GALVANIZED STEEL</span>◆<span>R-14.7 POLYURETHANE CORE</span>◆<span>5 RESIDENTIAL PRODUCT LINES</span>◆<span>U.S. MARKET CONFIGURED</span>◆<span>NO SWELLING FOAM TECHNOLOGY</span>◆<span>27GA PRE-PAINTED GALVANIZED STEEL</span>◆<span>R-14.7 POLYURETHANE CORE</span>◆<span>5 RESIDENTIAL PRODUCT LINES</span>◆<span>U.S. MARKET CONFIGURED</span>◆<span>NO SWELLING FOAM TECHNOLOGY</span>◆
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="header-row">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><img src="uploads/Untitled-design-2-e1784656485466.png" alt="Garage Door Lift"></span>
+      <span class="brand-tag">RESIDENTIAL SUPPLIER<strong>U.S. MARKET</strong></span>
+    </a>
+    <nav class="nav">
+      <a href="index.html" class="nav-link">HOME</a>
+      <a href="products.html" class="nav-link">PRODUCTS</a>
+      <a href="builder.html" class="nav-link active">BUILD A DOOR</a>
+      <a href="about.html" class="nav-link">ABOUT</a>
+      <a href="contact.html" class="nav-link">CONTACT</a>
+      <a href="login.html" class="nav-link auth-guest-only">LOGIN</a>
+      <a href="account.html" class="nav-link auth-user-only">MY ACCOUNT</a>
+    </nav>
+    <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
+    <a href="contact.html" class="btn btn-primary btn-notch request-quote-header">REQUEST A QUOTE</a>
+  </div>
+</header>
+
+<section class="section-tight">
+  <div class="wrap">
+    <div class="eyebrow">DESIGN TOOL</div>
+    <h1 class="section-title" style="font-size:clamp(30px,4vw,44px);margin-bottom:10px;">Build your own garage door</h1>
+    <p style="color:var(--text-muted);max-width:640px;margin-bottom:30px;">Choose a product line, then pick your size, model, style, color and windows — the preview updates as you go. When you're happy with it, request a quote.</p>
+
+    <div id="resume-banner" class="builder-resume-banner" hidden>
+      <span>We found a saved design in progress.</span>
+      <div class="builder-resume-actions">
+        <button type="button" class="btn btn-outline" data-discard-resume>Discard</button>
+        <button type="button" class="btn btn-primary" data-resume>Resume design</button>
+      </div>
+    </div>
+
+    <div id="builder-progress" class="builder-progress"></div>
+
+    <div class="builder-grid">
+      <div id="builder-preview-wrap" class="builder-preview-col">
+        <div id="builder-preview" class="builder-preview-panel"></div>
+        <div id="builder-summary-chips" class="builder-summary-chips"></div>
+      </div>
+
+      <div class="builder-steps-col">
+        <div id="builder-error" class="auth-error"></div>
+
+        <section class="builder-step" data-step="line">
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">01 / PRODUCT LINE</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a product line</h2>
+          </div>
+          <div id="line-options" class="style-icon-grid-auto"></div>
+          <div class="builder-step-nav">
+            <span></span>
+            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="size" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">02 / SIZE</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a door size</h2>
+          </div>
+          <div id="size-options" class="style-icon-grid-auto"></div>
+          <div id="size-custom-fields" class="builder-custom-size" hidden>
+            <div>
+              <label for="custom-width">WIDTH (FEET)</label>
+              <input type="number" id="custom-width" min="6" max="20" step="0.5" placeholder="e.g. 9">
+            </div>
+            <div>
+              <label for="custom-height">HEIGHT (FEET)</label>
+              <input type="number" id="custom-height" min="6" max="12" step="0.5" placeholder="e.g. 7">
+            </div>
+          </div>
+          <div class="builder-step-nav">
+            <button type="button" class="btn btn-outline" data-back>← BACK</button>
+            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="model" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">02 / MODEL</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a model</h2>
+          </div>
+          <div id="model-options" class="style-icon-grid-auto"></div>
+          <div class="builder-step-nav">
+            <button type="button" class="btn btn-outline" data-back>← BACK</button>
+            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="style" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">03 / STYLE</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a style</h2>
+          </div>
+          <div id="style-options" class="style-icon-grid-auto"></div>
+          <div class="builder-step-nav">
+            <button type="button" class="btn btn-outline" data-back>← BACK</button>
+            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="color" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">04 / COLOR</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a color</h2>
+          </div>
+          <div id="color-options" class="style-icon-grid-auto"></div>
+          <div class="builder-step-nav">
+            <button type="button" class="btn btn-outline" data-back>← BACK</button>
+            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="windows" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">05 / WINDOWS</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a window option</h2>
+            <p class="window-note" style="margin-top:8px;">Optional — windows sit in the top row of the door.</p>
+          </div>
+          <div id="window-options" class="style-icon-grid-auto"></div>
+          <div class="builder-step-nav">
+            <button type="button" class="btn btn-outline" data-back>← BACK</button>
+            <button type="button" class="btn btn-primary btn-notch" data-next>REVIEW →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="review" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">06 / REVIEW</div>
+            <h2 class="spec-title" style="font-size:26px;">Review your door</h2>
+          </div>
+          <div id="review-summary" class="builder-review-list"></div>
+          <div class="builder-step-nav">
+            <button type="button" class="btn btn-outline" data-back>← BACK</button>
+            <button type="button" class="btn btn-primary btn-notch" data-next>REQUEST A QUOTE →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="quote" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">07 / REQUEST A QUOTE</div>
+            <h2 class="spec-title" style="font-size:26px;">Your details</h2>
+          </div>
+          <form id="builder-quote-form" class="form builder-quote-form" novalidate>
+            <div id="quote-submit-error" class="auth-error"></div>
+            <div class="form-row">
+              <div>
+                <label for="q-quantity">QUANTITY</label>
+                <input type="number" id="q-quantity" min="1" step="1" value="1" required>
+                <span class="field-error" id="fe-q-quantity"></span>
+              </div>
+              <div>
+                <label for="q-name">FULL NAME</label>
+                <input type="text" id="q-name" required>
+                <span class="field-error" id="fe-q-name"></span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="q-phone">PHONE</label>
+                <input type="tel" id="q-phone" required>
+                <span class="field-error" id="fe-q-phone"></span>
+              </div>
+              <div>
+                <label for="q-email">EMAIL</label>
+                <input type="email" id="q-email">
+                <span class="field-error" id="fe-q-email"></span>
+              </div>
+            </div>
+            <div>
+              <label for="q-address">ADDRESS</label>
+              <input type="text" id="q-address">
+              <span class="field-error" id="fe-q-address"></span>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="q-city">CITY</label>
+                <input type="text" id="q-city">
+                <span class="field-error" id="fe-q-city"></span>
+              </div>
+              <div>
+                <label for="q-state">STATE</label>
+                <input type="text" id="q-state">
+                <span class="field-error" id="fe-q-state"></span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="q-country">COUNTRY</label>
+                <input type="text" id="q-country" value="United States">
+                <span class="field-error" id="fe-q-country"></span>
+              </div>
+              <div>
+                <label for="q-postal">POSTAL CODE</label>
+                <input type="text" id="q-postal">
+                <span class="field-error" id="fe-q-postal"></span>
+              </div>
+            </div>
+            <div class="builder-step-nav">
+              <button type="button" class="btn btn-outline" data-back>← BACK</button>
+              <button type="submit" class="btn btn-primary btn-notch" id="quote-submit-btn">SUBMIT REQUEST</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="builder-success" class="builder-success" hidden>
+          <div class="form-success-title">Request received</div>
+          <p>Your door configuration has been saved. Reference <strong id="success-ref"></strong>.</p>
+          <p class="window-note">We don't send automatic emails yet — download your PDF now, and our team will follow up with pricing and availability.</p>
+          <div class="builder-success-actions">
+            <a href="#" id="success-download" class="btn btn-primary btn-notch" download>DOWNLOAD PDF</a>
+            <button type="button" class="btn btn-outline" data-start-over>BUILD ANOTHER DOOR</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-mark"><img src="uploads/Untitled-design-2-e1784656485466.png" alt="Garage Door Lift"></div>
+        <div class="footer-desc">U.S.-based supplier of residential garage doors, hardware and accessories. Catalog listings only — contact us for pricing and orders.</div>
+      </div>
+      <div>
+        <div class="footer-head">PRODUCT LINES</div>
+        <a href="product-panel.html" class="footer-link">Insulated Panel</a>
+        <a href="product-flush.html" class="footer-link">Modern Flush</a>
+        <a href="product-overlay.html" class="footer-link">Overlay</a>
+        <a href="product-glass.html" class="footer-link">Glass</a>
+        <a href="product-grille.html" class="footer-link">Aluminum Grille</a>
+      </div>
+      <div>
+        <div class="footer-head">COMPANY</div>
+        <a href="index.html" class="footer-link">Home</a>
+        <a href="products.html" class="footer-link">Products</a>
+        <a href="about.html" class="footer-link">About</a>
+        <a href="contact.html" class="footer-link">Request a Quote</a>
+      </div>
+      <div>
+        <div class="footer-head">DETAILS</div>
+        <div class="footer-details">Phone: available on request<br>Email: available on request<br>Area: available on request</div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 GARAGE DOOR LIFT — ALL RIGHTS RESERVED</span>
+      <span>PRODUCT CATALOG SITE · NO ONLINE CHECKOUT</span>
+    </div>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/builder.js"></script>
+</body>
+</html>
