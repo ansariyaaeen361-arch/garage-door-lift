@@ -60,17 +60,22 @@
   <div>
     <div class="badge">Prototype — Live 3D, not a photo</div>
     <h1>Insulated Panel — real-time 3D preview</h1>
-    <p>Drag to rotate, scroll to zoom. Everything below updates instantly on the same live model — real WebGL rendering (Three.js, free/open-source), not a pre-made image.</p>
+    <p>Drag to rotate. Everything below updates instantly on the same live model — real WebGL rendering (Three.js, free/open-source), shared with the real Door Builder page.</p>
   </div>
 </div>
 
 <div id="controls">
   <div class="row">
+    <span class="label">Size</span>
+    <button class="style-btn is-active" data-cols="4">Single (4 cols)</button>
+    <button class="style-btn" data-cols="8">Double (8 cols)</button>
+  </div>
+  <div class="row">
     <span class="label">Style</span>
     <button class="style-btn is-active" data-style="cassette">Classic Cassette</button>
     <button class="style-btn" data-style="carriage-short">Carriage Short</button>
     <button class="style-btn" data-style="carriage-long">Carriage Long</button>
-    <button class="style-btn" data-style="ranch">Raised Ranch</button>
+    <button class="style-btn" data-style="raised-ranch">Raised Ranch</button>
   </div>
   <div class="row">
     <span class="label">Color</span>
@@ -92,400 +97,45 @@
 }
 </script>
 <script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createDoorScene } from './js/builder-3d.js';
 
-const wrap = document.getElementById('canvas-wrap');
-const loading = document.getElementById('loading');
+const state = { cols: 4, style: 'cassette', colorHex: '#1a1a1a', hasWindow: true };
+const scene = createDoorScene(document.getElementById('canvas-wrap'));
+scene.update(state);
+document.getElementById('loading').style.display = 'none';
 
-// ---------- scene / renderer ----------
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xcfcbc0);
-scene.fog = new THREE.Fog(0xcfcbc0, 13, 24);
-
-// A near-front camera by default — the previous 3/4 angle only showed the panel
-// relief when lit from the side, so straight-on it looked flat. This starts close
-// to head-on (small offset for depth cues) and the baked texture below (not just
-// real-time shadow) is what actually guarantees the grid reads from any angle.
-const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0.9, 1.35, 5.6);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-wrap.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.minDistance = 3.2;
-controls.maxDistance = 11;
-controls.maxPolarAngle = Math.PI / 2 - 0.04;
-controls.target.set(0, 1.05, 0);
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.7;
-
-// ---------- lighting (three-point, for a premium studio-shot feel) ----------
-scene.add(new THREE.HemisphereLight(0xffffff, 0x4a4840, 0.6));
-
-const key = new THREE.DirectionalLight(0xfff6e6, 1.9);
-key.position.set(3.5, 5.5, 5);
-key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-key.shadow.camera.left = -3.5; key.shadow.camera.right = 3.5;
-key.shadow.camera.top = 3.5; key.shadow.camera.bottom = -3.5;
-key.shadow.bias = -0.0015;
-scene.add(key);
-
-const fillLight = new THREE.DirectionalLight(0xcfe0ff, 0.55);
-fillLight.position.set(-5, 2.5, 3);
-scene.add(fillLight);
-
-const rim = new THREE.DirectionalLight(0xffffff, 0.5);
-rim.position.set(-2, 3, -5);
-scene.add(rim);
-
-// ---------- ground + backdrop ----------
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(40, 40),
-  new THREE.MeshStandardMaterial({ color: 0xbdb8ab, roughness: 1 })
-);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
-
-const wall = new THREE.Mesh(
-  new THREE.PlaneGeometry(40, 20),
-  new THREE.MeshStandardMaterial({ color: 0xdedad0, roughness: 1 })
-);
-wall.position.set(0, 10, -3.2);
-wall.receiveShadow = true;
-scene.add(wall);
-
-// ---------- constants ----------
-const DOOR_W = 3.2, DOOR_H = 2.1; // meters
-const COLS = 4, ROWS = 5;
-const baseDepth = 0.09;
-const baseFrontZ = baseDepth / 2;
-
-let currentColor = '#1a1a1a';
-let currentStyle = 'cassette';
-let showWindows = true;
-
-function relativeLuminance(hex) {
-  const c = new THREE.Color(hex);
-  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
-}
-
-// The door's real material color, painted with a MeshPhysicalMaterial + a thin
-// clearcoat so it reads like painted steel (a subtle extra specular layer), not
-// flat plastic.
-const doorMaterial = new THREE.MeshPhysicalMaterial({
-  color: currentColor, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
-});
-const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xe7e4da, roughness: 0.85 });
-const glassMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x8fa4b8, roughness: 0.08, metalness: 0.1, transmission: 0.75, thickness: 0.05,
-  ior: 1.45, transparent: true, opacity: 0.92
-});
-
-const doorGroup = new THREE.Group();
-scene.add(doorGroup);
-
-// Trim frame around the opening.
-const trimDepth = 0.12, trimWidth = 0.14;
-function addTrimBar(w, h, x, y) {
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, trimDepth), frameMaterial);
-  bar.position.set(x, y, -0.05);
-  bar.castShadow = true; bar.receiveShadow = true;
-  doorGroup.add(bar);
-}
-addTrimBar(DOOR_W + trimWidth * 2, trimWidth, 0, trimWidth / 2);
-addTrimBar(trimWidth, DOOR_H + trimWidth, -DOOR_W / 2 - trimWidth / 2, DOOR_H / 2 + trimWidth / 2);
-addTrimBar(trimWidth, DOOR_H + trimWidth, DOOR_W / 2 + trimWidth / 2, DOOR_H / 2 + trimWidth / 2);
-addTrimBar(DOOR_W + trimWidth * 2, trimWidth, 0, DOOR_H + trimWidth / 2 + trimWidth / 2);
-
-// ---------- texture baking ----------
-// A real-time canvas render bakes the panel/groove/crossbuck lines directly into the
-// color map, so the grid is always visible via genuine color/shading contrast —
-// independent of which way the real-time light happens to be pointing. The raised
-// 3D geometry below adds real silhouette/highlight-catching depth on top of this,
-// so both a straight-on view and a grazing side view read correctly.
-function bakeDoorTexture(styleId, colorHex, hasWindow) {
-  const texW = 1024, texH = Math.round(texW * DOOR_H / DOOR_W);
-  const canvas = document.createElement('canvas');
-  canvas.width = texW; canvas.height = texH;
-  const ctx = canvas.getContext('2d');
-
-  ctx.fillStyle = colorHex;
-  ctx.fillRect(0, 0, texW, texH);
-
-  const isLight = relativeLuminance(colorHex) > 0.5;
-  const dark = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.32)';
-  const light = isLight ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.2)';
-
-  function strokeEmbossed(drawPath, lw) {
-    ctx.lineWidth = lw;
-    ctx.strokeStyle = dark;
-    ctx.save(); ctx.translate(1.4, 1.4); drawPath(); ctx.stroke(); ctx.restore();
-    ctx.strokeStyle = light;
-    ctx.save(); ctx.translate(-1.4, -1.4); drawPath(); ctx.stroke(); ctx.restore();
-  }
-  function fillBevel(x, y, w, h, vertical) {
-    const grad = vertical ? ctx.createLinearGradient(0, y, 0, y + h) : ctx.createLinearGradient(x, y, x + w, y + h);
-    grad.addColorStop(0, isLight ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.14)');
-    grad.addColorStop(0.55, 'rgba(255,255,255,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.26)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, y, w, h);
-  }
-
-  const pad = texW * 0.018;
-  const gapX = texW * 0.011, gapY = texH * 0.016;
-  const totalW = texW - pad * 2, totalH = texH - pad * 2;
-  const cellW = (totalW - gapX * (COLS - 1)) / COLS;
-  const cellH = (totalH - gapY * (ROWS - 1)) / ROWS;
-  const rowY = (r) => pad + r * (cellH + gapY);
-  const colX = (c) => pad + c * (cellW + gapX);
-
-  let windowRect = null;
-  if (hasWindow) {
-    windowRect = { x: pad, y: pad, w: totalW, h: cellH };
-    ctx.fillStyle = '#cfd8dc';
-    ctx.fillRect(windowRect.x, windowRect.y, windowRect.w, windowRect.h);
-    for (let c = 1; c < COLS; c++) {
-      const x = colX(c) - gapX / 2;
-      strokeEmbossed(() => { ctx.beginPath(); ctx.moveTo(x, pad + 4); ctx.lineTo(x, pad + cellH - 4); }, 2.5);
-    }
-    strokeEmbossed(() => { ctx.beginPath(); ctx.rect(windowRect.x + 2, windowRect.y + 2, windowRect.w - 4, windowRect.h - 4); }, 3);
-  }
-  const startRow = hasWindow ? 1 : 0;
-
-  if (styleId === 'cassette') {
-    for (let r = 1; r < ROWS; r++) {
-      const y = rowY(r) - gapY / 2;
-      strokeEmbossed(() => { ctx.beginPath(); ctx.moveTo(pad + 8, y); ctx.lineTo(pad + totalW - 8, y); }, 3);
-    }
-    const inset = cellW * 0.15;
-    for (let r = startRow; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const x = colX(c), y = rowY(r);
-        const rx = x + inset, ry = y + inset, rw = cellW - inset * 2, rh = cellH - inset * 2;
-        fillBevel(rx, ry, rw, rh, false);
-        strokeEmbossed(() => { ctx.beginPath(); ctx.rect(rx, ry, rw, rh); }, 3);
-      }
-    }
-  } else if (styleId === 'ranch') {
-    for (let r = startRow; r < ROWS; r++) {
-      fillBevel(pad, rowY(r), totalW, cellH, true);
-    }
-    for (let r = 1; r < ROWS; r++) {
-      const y = rowY(r) - gapY / 2;
-      strokeEmbossed(() => { ctx.beginPath(); ctx.moveTo(pad + 8, y); ctx.lineTo(pad + totalW - 8, y); }, 3);
-    }
-  } else if (styleId === 'carriage-short' || styleId === 'carriage-long') {
-    const n = styleId === 'carriage-long' ? 6 : 3;
-    const bodyTop = hasWindow ? rowY(1) : pad;
-    const bodyBottom = pad + totalH;
-    const bodyH = bodyBottom - bodyTop;
-    for (let i = 1; i < n; i++) {
-      const x = pad + (totalW / n) * i;
-      strokeEmbossed(() => { ctx.beginPath(); ctx.moveTo(x, bodyTop + 8); ctx.lineTo(x, bodyBottom - 8); }, 3);
-    }
-    [bodyTop + 6, bodyBottom - 6].forEach((y) => {
-      strokeEmbossed(() => { ctx.beginPath(); ctx.moveTo(pad + 8, y); ctx.lineTo(pad + totalW - 8, y); }, 3);
-    });
-    const leaves = 2, leafW = totalW / leaves;
-    for (let i = 0; i < leaves; i++) {
-      const lx = pad + i * leafW;
-      strokeEmbossed(() => {
-        ctx.beginPath();
-        ctx.moveTo(lx + 14, bodyBottom - 12);
-        ctx.lineTo(lx + leafW - 14, bodyTop + 12);
-      }, 3);
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  texture.needsUpdate = true;
-
-  return {
-    texture, windowRect, texW, texH, pad, gapX, gapY, cellW, cellH,
-    toWorld(x, y, w, h) {
-      const scale = DOOR_W / texW;
-      return {
-        w: w * scale, h: h * scale,
-        cx: (x + w / 2 - texW / 2) * scale,
-        cy: DOOR_H - (y + h / 2) * scale
-      };
-    }
-  };
-}
-
-// ---------- door assembly ----------
-let doorMeshGroup = null;
-
-function buildDoor(styleId, colorHex, hasWindow) {
-  if (doorMeshGroup) { doorGroup.remove(doorMeshGroup); }
-  doorMeshGroup = new THREE.Group();
-
-  const baked = bakeDoorTexture(styleId, colorHex, hasWindow);
-  doorMaterial.map = baked.texture;
-  doorMaterial.color.set('#ffffff'); // the color now lives in the baked texture
-  doorMaterial.needsUpdate = true;
-
-  const base = new THREE.Mesh(new THREE.BoxGeometry(DOOR_W, DOOR_H, baseDepth), doorMaterial);
-  base.position.set(0, DOOR_H / 2, 0);
-  base.castShadow = true; base.receiveShadow = true;
-  doorMeshGroup.add(base);
-
-  const raise = 0.05;
-  const flatMat = new THREE.MeshPhysicalMaterial({
-    color: colorHex, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
+document.querySelectorAll('[data-cols]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-cols]').forEach((b) => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    state.cols = Number(btn.dataset.cols);
+    scene.update(state);
   });
-
-  const startRow = hasWindow ? 1 : 0;
-  const gapWorldX = baked.gapX * (DOOR_W / baked.texW);
-  const gapWorldY = baked.gapY * (DOOR_H / baked.texH);
-
-  if (styleId === 'cassette') {
-    for (let r = startRow; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const x = baked.pad + c * (baked.cellW + baked.gapX);
-        const y = baked.pad + r * (baked.cellH + baked.gapY);
-        const inset = baked.cellW * 0.15;
-        const w = baked.toWorld(0, 0, baked.cellW - inset * 2, baked.cellH - inset * 2);
-        const pos = baked.toWorld(x + inset, y + inset, baked.cellW - inset * 2, baked.cellH - inset * 2);
-        const panel = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, raise), flatMat);
-        panel.position.set(pos.cx, pos.cy, baseFrontZ + raise / 2);
-        panel.castShadow = true; panel.receiveShadow = true;
-        doorMeshGroup.add(panel);
-      }
-    }
-  } else if (styleId === 'ranch') {
-    for (let r = startRow; r < ROWS; r++) {
-      const y = baked.pad + r * (baked.cellH + baked.gapY);
-      const inset = baked.cellW * 0.02;
-      const w = baked.toWorld(0, 0, baked.texW - baked.pad * 2 - inset * 2, baked.cellH);
-      const pos = baked.toWorld(baked.pad + inset, y, baked.texW - baked.pad * 2 - inset * 2, baked.cellH);
-      const band = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h * 0.82, raise), flatMat);
-      band.position.set(pos.cx, pos.cy, baseFrontZ + raise / 2);
-      band.castShadow = true; band.receiveShadow = true;
-      doorMeshGroup.add(band);
-    }
-  } else if (styleId === 'carriage-short' || styleId === 'carriage-long') {
-    const n = styleId === 'carriage-long' ? 6 : 3;
-    const bodyTopPx = hasWindow ? baked.pad + (baked.cellH + baked.gapY) : baked.pad;
-    const bodyBottomPx = baked.texH - baked.pad;
-    const stileWpx = 10;
-    for (let i = 1; i < n; i++) {
-      const xPx = baked.pad + ((baked.texW - baked.pad * 2) / n) * i - stileWpx / 2;
-      const w = baked.toWorld(0, 0, stileWpx, bodyBottomPx - bodyTopPx - 16);
-      const pos = baked.toWorld(xPx, bodyTopPx + 8, stileWpx, bodyBottomPx - bodyTopPx - 16);
-      const stile = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, raise), flatMat);
-      stile.position.set(pos.cx, pos.cy, baseFrontZ + raise / 2);
-      stile.castShadow = true; stile.receiveShadow = true;
-      doorMeshGroup.add(stile);
-    }
-    const leaves = 2, leafWpx = (baked.texW - baked.pad * 2) / leaves;
-    const braceLenPx = Math.hypot(leafWpx - 28, bodyBottomPx - bodyTopPx - 24);
-    const braceScale = DOOR_W / baked.texW;
-    for (let i = 0; i < leaves; i++) {
-      const lxPx = baked.pad + i * leafWpx;
-      const centerPx = { x: lxPx + leafWpx / 2, y: (bodyTopPx + bodyBottomPx) / 2 };
-      const pos = baked.toWorld(centerPx.x, centerPx.y, 0, 0);
-      const brace = new THREE.Mesh(new THREE.BoxGeometry(braceLenPx * braceScale, stileWpx * braceScale, raise), flatMat);
-      brace.position.set(pos.cx, pos.cy, baseFrontZ + raise / 2);
-      brace.rotation.z = Math.atan2(bodyBottomPx - bodyTopPx - 24, leafWpx - 28);
-      brace.castShadow = true; brace.receiveShadow = true;
-      doorMeshGroup.add(brace);
-    }
-    // hardware handle
-    const handle = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.02, 0.02, 0.22, 12),
-      new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35, metalness: 0.6 })
-    );
-    handle.rotation.z = Math.PI / 2;
-    handle.position.set(DOOR_W / 2 - 0.35, DOOR_H * 0.42, baseFrontZ + raise + 0.03);
-    handle.castShadow = true;
-    doorMeshGroup.add(handle);
-  }
-
-  // Real 3D windows — a recessed frame + a glass pane per column, sitting in the
-  // top row, not just drawn into the texture. transmission on the glass material
-  // gives genuine refraction/reflection under the scene lights.
-  if (hasWindow && baked.windowRect) {
-    const wr = baked.windowRect;
-    for (let c = 0; c < COLS; c++) {
-      const cellWpx = wr.w / COLS;
-      const xPx = wr.x + c * cellWpx;
-      const frameInset = cellWpx * 0.12;
-      const fw = baked.toWorld(0, 0, cellWpx - frameInset * 2, wr.h - frameInset * 2);
-      const fpos = baked.toWorld(xPx + frameInset, wr.y + frameInset, cellWpx - frameInset * 2, wr.h - frameInset * 2);
-
-      const frame = new THREE.Mesh(new THREE.BoxGeometry(fw.w, fw.h, raise * 0.9), frameMaterial);
-      frame.position.set(fpos.cx, fpos.cy, baseFrontZ + raise * 0.45);
-      frame.castShadow = true; frame.receiveShadow = true;
-      doorMeshGroup.add(frame);
-
-      const glassInset = 0.012;
-      const glass = new THREE.Mesh(new THREE.BoxGeometry(fw.w - glassInset * 2, fw.h - glassInset * 2, 0.015), glassMaterial);
-      glass.position.set(fpos.cx, fpos.cy, baseFrontZ + raise * 0.9 + 0.01);
-      doorMeshGroup.add(glass);
-    }
-  }
-
-  doorGroup.add(doorMeshGroup);
-}
-
-buildDoor(currentStyle, currentColor, showWindows);
-
-// ---------- interaction ----------
+});
 document.querySelectorAll('.swatch').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.swatch').forEach((b) => b.classList.remove('is-active'));
     btn.classList.add('is-active');
-    currentColor = btn.dataset.color;
-    buildDoor(currentStyle, currentColor, showWindows);
+    state.colorHex = btn.dataset.color;
+    scene.update(state);
   });
 });
-document.querySelectorAll('.style-btn[data-style]').forEach((btn) => {
+document.querySelectorAll('[data-style]').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.style-btn[data-style]').forEach((b) => b.classList.remove('is-active'));
+    document.querySelectorAll('[data-style]').forEach((b) => b.classList.remove('is-active'));
     btn.classList.add('is-active');
-    currentStyle = btn.dataset.style;
-    buildDoor(currentStyle, currentColor, showWindows);
+    state.style = btn.dataset.style;
+    scene.update(state);
   });
 });
-document.querySelectorAll('.style-btn[data-windows]').forEach((btn) => {
+document.querySelectorAll('[data-windows]').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.style-btn[data-windows]').forEach((b) => b.classList.remove('is-active'));
+    document.querySelectorAll('[data-windows]').forEach((b) => b.classList.remove('is-active'));
     btn.classList.add('is-active');
-    showWindows = btn.dataset.windows === '1';
-    buildDoor(currentStyle, currentColor, showWindows);
+    state.hasWindow = btn.dataset.windows === '1';
+    scene.update(state);
   });
 });
-renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; }, { once: true });
-
-// ---------- resize + loop ----------
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-loading.style.display = 'none';
-animate();
 </script>
 </body>
 </html>

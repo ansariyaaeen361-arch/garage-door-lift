@@ -793,8 +793,18 @@ body.is-authed .auth-user-only { display: inline-block; }
 /* ---------- scroll-reveal (JS adds .reveal on load, .revealed once in view) ---------- */
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.65s ease, transform 0.65s ease; }
 .reveal.revealed { opacity: 1; transform: translateY(0); }
+
+/* Heading scroll-reveal — a slightly richer settle-into-place motion (fade +
+   slide + a touch of scale) so section headings feel like a deliberate
+   moment, distinct from the plainer fade-up used for cards/rows. */
+.heading-reveal {
+  opacity: 0; transform: translateY(30px) scale(0.97);
+  transition: opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1);
+}
+.heading-reveal.revealed { opacity: 1; transform: translateY(0) scale(1); }
+
 @media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal, .heading-reveal { opacity: 1; transform: none; transition: none; }
   .hero-content, .hero-banner, .badge, .hero-title, .hero-copy, .hero-actions { animation: none !important; }
   .btn:hover, .line-row:hover, .line-row-index:hover, .feature-card:hover, .model-card:hover,
   .style-card:hover, .hardware-card:hover, .testimonial-card:hover, .gallery-item:hover img,
@@ -812,7 +822,25 @@ body.is-authed .auth-user-only { display: inline-block; }
   .btn.request-quote-header { white-space: nowrap; }
 }
 
-/* ---------- door builder ---------- */
+/* ---------- door builder (full-width, no site header/footer) ---------- */
+.builder-page { background: var(--bg); }
+
+.builder-back-btn {
+  position: fixed; top: 24px; right: 24px; z-index: 200;
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--ink); color: var(--text); border: 1px solid var(--border-2);
+  padding: 15px 24px 15px 18px; text-decoration: none;
+  font-family: var(--font-nav); font-weight: 700; font-size: 13px; letter-spacing: 0.12em;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 13px) 100%, 0 100%);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.builder-back-btn svg { flex: none; transition: transform 0.2s ease; }
+.builder-back-btn:hover { background: var(--yellow); color: var(--ink); border-color: var(--yellow); transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.28); }
+.builder-back-btn:hover svg { transform: translateX(-3px); }
+
+.builder-hero-section { padding: 40px 0 80px 0; }
+.builder-page-wrap { max-width: 1800px; margin: 0 auto; padding: 0 48px; }
+
 .builder-resume-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   background: var(--panel-2); border: 1px solid var(--yellow); padding: 16px 20px; margin-bottom: 24px; font-size: 14px;
@@ -834,15 +862,22 @@ body.is-authed .auth-user-only { display: inline-block; }
 .builder-progress-seg.is-locked { opacity: 0.4; cursor: not-allowed; }
 .builder-progress-seg:disabled { cursor: not-allowed; }
 
-.builder-grid { display: grid; grid-template-columns: 360px 1fr; gap: 50px; align-items: start; }
+/* Preview takes 70% of the row, the step/selection column takes the remaining
+   30%, side by side in one row (stacks on small screens — see media query). */
+.builder-grid { display: grid; grid-template-columns: 7fr 3fr; gap: 40px; align-items: start; }
 .builder-grid.is-success { grid-template-columns: 1fr; max-width: 640px; margin: 0 auto; }
-.builder-preview-col { position: sticky; top: 100px; min-width: 0; }
+.builder-preview-col { min-width: 0; }
 .builder-preview-panel {
   background: #fff; border: 1px solid var(--border-2); padding: 24px;
   display: flex; align-items: center; justify-content: center; min-height: 260px;
 }
 .builder-preview-panel .door-svg,
-.builder-preview-panel .door-canvas { width: 100%; height: auto; max-height: 420px; display: block; }
+.builder-preview-panel .door-canvas { width: 100%; height: auto; max-height: 560px; display: block; }
+.builder-preview-panel { overflow: hidden; }
+.door3d-mount { width: 100%; height: 560px; }
+.door3d-mount canvas { width: 100%; height: 100%; display: block; }
+.schematic-mount { width: 100%; display: flex; align-items: center; justify-content: center; }
+.schematic-mount[hidden] { display: none; }
 
 /* Schematic preview (Flush/Overlay/Glass/Grille) — a flat color box sized like the
    real canvas grid, not a photo composite; see renderSchematicPreview() in builder.js */
@@ -989,9 +1024,11 @@ body.is-authed .auth-user-only { display: inline-block; }
   .grille-features-grid { grid-template-columns: 1fr; gap: 32px; }
 
   .builder-grid { grid-template-columns: 1fr; gap: 30px; }
-  .builder-preview-col { position: static; }
   .builder-progress-seg .t { display: none; }
   .builder-custom-size { grid-template-columns: 1fr; max-width: none; }
+  .builder-page-wrap { padding: 0 24px; }
+  .builder-hero-section { padding-top: 34px; }
+  .door3d-mount { height: 380px; }
 
   .auth-split { grid-template-columns: 1fr; min-height: 0; }
   .auth-media { min-height: 220px; }
@@ -1003,4 +1040,14 @@ body.is-authed .auth-user-only { display: inline-block; }
 @media (max-width: 560px) {
   .footer-grid { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
+
+  .builder-back-btn { padding: 13px; gap: 0; top: 16px; right: 16px; }
+  .builder-back-btn span { display: none; }
+  .builder-hero-section { padding-top: 26px; }
+  /* Extra right padding so the heading doesn't run under the fixed back button. */
+  .builder-page-wrap { padding: 0 18px; }
+  .builder-hero-section .eyebrow, .builder-hero-section h1, .builder-hero-section > .builder-page-wrap > p {
+    padding-right: 56px;
+  }
+  .door3d-mount { height: 300px; }
 }

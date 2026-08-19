@@ -106,9 +106,39 @@
     window.addEventListener('scroll', setScrolled, { passive: true });
   }
 
-  // Scroll-reveal: fade + slide up the first time a block enters the viewport.
-  // Applied generically by selector so individual pages don't need a class
-  // hand-added to every card/row.
+  // Scroll-reveal: fade (+ slide, for cards) the first time a block enters the
+  // viewport. Applied generically by selector so individual pages don't need a
+  // class hand-added to every card/row. Shared by both the card-style reveal
+  // below and the heading-style reveal further down.
+  function setupReveal(targets, opts) {
+    opts = opts || {};
+    var revealClass = opts.revealClass || 'reveal';
+    var revealedClass = opts.revealedClass || 'revealed';
+    var stagger = opts.stagger !== false;
+    if (!targets.length) return;
+    Array.prototype.forEach.call(targets, function (el) {
+      el.classList.add(revealClass);
+      if (stagger) {
+        var siblings = el.parentElement ? el.parentElement.children : [];
+        var idx = Array.prototype.indexOf.call(siblings, el);
+        el.style.transitionDelay = (Math.min(Math.max(idx, 0), 5) * 0.07) + 's';
+      }
+    });
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(revealedClass);
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+      Array.prototype.forEach.call(targets, function (el) { io.observe(el); });
+    } else {
+      Array.prototype.forEach.call(targets, function (el) { el.classList.add(revealedClass); });
+    }
+  }
+
   var revealSelectors = [
     '.section-head', '.line-row', '.line-row-index', '.feature-card', '.model-card',
     '.style-card', '.color-card', '.hardware-card', '.testimonial-card', '.gallery-item',
@@ -117,26 +147,17 @@
     '.coverage-copy', '.window-card', '.feature-list-item', '.contact-info-card',
     '.contact-media', '.form'
   ];
-  var revealTargets = document.querySelectorAll(revealSelectors.join(','));
-  if (revealTargets.length) {
-    revealTargets.forEach(function (el) {
-      el.classList.add('reveal');
-      var siblings = el.parentElement ? el.parentElement.children : [];
-      var idx = Array.prototype.indexOf.call(siblings, el);
-      el.style.transitionDelay = (Math.min(Math.max(idx, 0), 5) * 0.07) + 's';
-    });
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('revealed');
-            io.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
-      revealTargets.forEach(function (el) { io.observe(el); });
-    } else {
-      revealTargets.forEach(function (el) { el.classList.add('revealed'); });
-    }
-  }
+  setupReveal(document.querySelectorAll(revealSelectors.join(',')));
+
+  // Headings get their own slightly richer reveal (fade + slide + scale, a
+  // touch slower) so they read as a deliberate flourish rather than just
+  // another card in the grid. Skipped when a heading already sits inside a
+  // `.section-head` block — that block reveals as one unit (eyebrow + heading
+  // + description together) above, so animating the heading again inside it
+  // would just double up the motion.
+  var headingCandidates = document.querySelectorAll('h1:not(.hero-title), .section-title, .cta-title, .spec-title, .about-title');
+  var headingTargets = Array.prototype.filter.call(headingCandidates, function (el) {
+    return !el.closest('.section-head');
+  });
+  setupReveal(headingTargets, { revealClass: 'heading-reveal', stagger: false });
 })();

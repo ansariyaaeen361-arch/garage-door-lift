@@ -67,7 +67,16 @@
       "Bash(node research-chi-live.js)",
       "Bash(node research-chi-color.js)",
       "WebFetch(domain:www.capterra.com)",
-      "Bash(node test-3d-prototype.js)"
+      "Bash(node test-3d-prototype.js)",
+      "Bash(node test-3d-v3.js)",
+      "Bash(node test-builder-3d-integration.js)",
+      "Bash(curl -sf -o /dev/null -w \"%{http_code}\\\\n\" -L http://localhost:3000/builder)",
+      "Bash(node test-window-designs.js)",
+      "Bash(mkdir -p \"C:/Users/PC/AppData/Local/Temp/claude/c--Users-PC-OneDrive-Desktop-garage-door/5a9fd1d4-0ce4-4d45-98a9-25a8ae9a51e0/scratchpad/shots\")",
+      "Bash(node \"C:\\\\Users\\\\PC\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-PC-OneDrive-Desktop-garage-door\\\\5a9fd1d4-0ce4-4d45-98a9-25a8ae9a51e0\\\\scratchpad\\\\test-all-lines-3d.js\")",
+      "Bash(node \"C:\\\\Users\\\\PC\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-PC-OneDrive-Desktop-garage-door\\\\5a9fd1d4-0ce4-4d45-98a9-25a8ae9a51e0\\\\scratchpad\\\\test-single-product.js\")",
+      "Bash(node \"C:\\\\Users\\\\PC\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-PC-OneDrive-Desktop-garage-door\\\\5a9fd1d4-0ce4-4d45-98a9-25a8ae9a51e0\\\\scratchpad\\\\test-3d-from-start.js\")",
+      "Bash(node \"C:\\\\Users\\\\PC\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-PC-OneDrive-Desktop-garage-door\\\\5a9fd1d4-0ce4-4d45-98a9-25a8ae9a51e0\\\\scratchpad\\\\test-layout.js\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\PC\\Downloads\\glass garage doors\\COLOR OPTIONS"

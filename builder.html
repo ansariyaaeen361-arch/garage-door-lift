@@ -4,44 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Door Builder — Garage Door Lift</title>
-<meta name="description" content="Design your own garage door across any of our 5 product lines — pick a line, size, model, style, color and windows, then request a quote.">
+<meta name="description" content="Design your own Insulated Panel garage door — pick a size, style, model, color and windows, then request a quote.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="builder-page">
 
-<div class="ticker">
-  <div class="ticker-track">
-    <span>27GA PRE-PAINTED GALVANIZED STEEL</span>◆<span>R-14.7 POLYURETHANE CORE</span>◆<span>5 RESIDENTIAL PRODUCT LINES</span>◆<span>U.S. MARKET CONFIGURED</span>◆<span>NO SWELLING FOAM TECHNOLOGY</span>◆<span>27GA PRE-PAINTED GALVANIZED STEEL</span>◆<span>R-14.7 POLYURETHANE CORE</span>◆<span>5 RESIDENTIAL PRODUCT LINES</span>◆<span>U.S. MARKET CONFIGURED</span>◆<span>NO SWELLING FOAM TECHNOLOGY</span>◆
-  </div>
-</div>
+<a href="/" class="builder-back-btn" aria-label="Back to Garage Door Lift">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+  <span>BACK TO SITE</span>
+</a>
 
-<header class="site-header">
-  <div class="header-row">
-    <a href="/" class="brand">
-      <span class="brand-mark"><img src="uploads/Untitled-design-2-e1784656485466.png" alt="Garage Door Lift"></span>
-      <span class="brand-tag">RESIDENTIAL SUPPLIER<strong>U.S. MARKET</strong></span>
-    </a>
-    <nav class="nav">
-      <a href="/" class="nav-link">HOME</a>
-      <a href="/products" class="nav-link">PRODUCTS</a>
-      <a href="/builder" class="nav-link active">BUILD A DOOR</a>
-      <a href="/about" class="nav-link">ABOUT</a>
-      <a href="/contact" class="nav-link">CONTACT</a>
-      <a href="/login" class="nav-link auth-guest-only">LOGIN</a>
-      <a href="/account" class="nav-link auth-user-only">MY ACCOUNT</a>
-    </nav>
-    <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
-    <a href="/contact" class="btn btn-primary btn-notch request-quote-header">REQUEST A QUOTE</a>
-  </div>
-</header>
-
-<section class="section-tight">
-  <div class="wrap">
+<section class="builder-hero-section">
+  <div class="builder-page-wrap">
     <div class="eyebrow">DESIGN TOOL</div>
     <h1 class="section-title" style="font-size:clamp(30px,4vw,44px);margin-bottom:10px;">Build your own garage door</h1>
-    <p style="color:var(--text-muted);max-width:640px;margin-bottom:30px;">Choose a product line, then pick your size, model, style, color and windows — the preview updates as you go. When you're happy with it, request a quote.</p>
+    <p style="color:var(--text-muted);max-width:640px;margin-bottom:30px;">Choose your size, style, model, color and windows — the preview updates as you go. When you're happy with it, request a quote.</p>
 
     <div id="resume-banner" class="builder-resume-banner" hidden>
       <span>We found a saved design in progress.</span>
@@ -62,21 +41,9 @@
       <div class="builder-steps-col">
         <div id="builder-error" class="auth-error"></div>
 
-        <section class="builder-step" data-step="line">
+        <section class="builder-step" data-step="size">
           <div class="builder-step-head">
-            <div class="spec-kicker gold">01 / PRODUCT LINE</div>
-            <h2 class="spec-title" style="font-size:26px;">Choose a product line</h2>
-          </div>
-          <div id="line-options" class="style-icon-grid-auto"></div>
-          <div class="builder-step-nav">
-            <span></span>
-            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
-          </div>
-        </section>
-
-        <section class="builder-step" data-step="size" hidden>
-          <div class="builder-step-head">
-            <div class="spec-kicker gold">02 / SIZE</div>
+            <div class="spec-kicker gold">01 / SIZE</div>
             <h2 class="spec-title" style="font-size:26px;">Choose a door size</h2>
           </div>
           <div id="size-options" class="style-icon-grid-auto"></div>
@@ -91,6 +58,18 @@
             </div>
           </div>
           <div class="builder-step-nav">
+            <span></span>
+            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
+          </div>
+        </section>
+
+        <section class="builder-step" data-step="style" hidden>
+          <div class="builder-step-head">
+            <div class="spec-kicker gold">02 / STYLE</div>
+            <h2 class="spec-title" style="font-size:26px;">Choose a style</h2>
+          </div>
+          <div id="style-options" class="style-icon-grid-auto"></div>
+          <div class="builder-step-nav">
             <button type="button" class="btn btn-outline" data-back>← BACK</button>
             <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
           </div>
@@ -98,22 +77,10 @@
 
         <section class="builder-step" data-step="model" hidden>
           <div class="builder-step-head">
-            <div class="spec-kicker gold">02 / MODEL</div>
+            <div class="spec-kicker gold">03 / MODEL</div>
             <h2 class="spec-title" style="font-size:26px;">Choose a model</h2>
           </div>
           <div id="model-options" class="style-icon-grid-auto"></div>
-          <div class="builder-step-nav">
-            <button type="button" class="btn btn-outline" data-back>← BACK</button>
-            <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
-          </div>
-        </section>
-
-        <section class="builder-step" data-step="style" hidden>
-          <div class="builder-step-head">
-            <div class="spec-kicker gold">03 / STYLE</div>
-            <h2 class="spec-title" style="font-size:26px;">Choose a style</h2>
-          </div>
-          <div id="style-options" class="style-icon-grid-auto"></div>
           <div class="builder-step-nav">
             <button type="button" class="btn btn-outline" data-back>← BACK</button>
             <button type="button" class="btn btn-primary btn-notch" data-next>NEXT →</button>
@@ -238,45 +205,11 @@
   </div>
 </section>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand-mark"><img src="uploads/Untitled-design-2-e1784656485466.png" alt="Garage Door Lift"></div>
-        <div class="footer-desc">U.S.-based supplier of residential garage doors, hardware and accessories. Catalog listings only — contact us for pricing and orders.</div>
-      </div>
-      <div>
-        <div class="footer-head">PRODUCT LINES</div>
-        <a href="/product-panel" class="footer-link">Insulated Panel</a>
-        <a href="/product-flush" class="footer-link">Modern Flush</a>
-        <a href="/product-overlay" class="footer-link">Overlay</a>
-        <a href="/product-glass" class="footer-link">Glass</a>
-        <a href="/product-grille" class="footer-link">Aluminum Grille</a>
-      </div>
-      <div>
-        <div class="footer-head">COMPANY</div>
-        <a href="/" class="footer-link">Home</a>
-        <a href="/products" class="footer-link">Products</a>
-        <a href="/about" class="footer-link">About</a>
-        <a href="/contact" class="footer-link">Request a Quote</a>
-      </div>
-      <div>
-        <div class="footer-head">DETAILS</div>
-        <div class="footer-details">Phone: available on request<br>Email: available on request<br>Area: available on request</div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 GARAGE DOOR LIFT — ALL RIGHTS RESERVED</span>
-      <span>PRODUCT CATALOG SITE · NO ONLINE CHECKOUT</span>
-    </div>
-  </div>
-</footer>
 <script src="js/main.js"></script>
 <script src="js/auth.js"></script>
-<!-- Live 3D preview (Insulated Panel line only) — Three.js, free/open-source, loaded
-     on demand via dynamic import() in js/builder.js so the other 4 lines never pay
-     for it. The import map just tells that dynamic import where to resolve "three"
-     from; it doesn't load anything until builder.js actually imports it. -->
+<!-- Live 3D preview — Three.js, free/open-source, loaded via dynamic import() in
+     js/builder.js as soon as the builder page loads. The import map just tells
+     that dynamic import where to resolve "three" from. -->
 <script type="importmap">
 {
   "imports": {
