@@ -866,7 +866,10 @@ body.is-authed .auth-user-only { display: inline-block; }
    30%, side by side in one row (stacks on small screens — see media query). */
 .builder-grid { display: grid; grid-template-columns: 7fr 3fr; gap: 40px; align-items: start; }
 .builder-grid.is-success { grid-template-columns: 1fr; max-width: 640px; margin: 0 auto; }
-.builder-preview-col { min-width: 0; }
+/* Sticks the preview in view while the (often much longer) options column scrolls
+   past it. builder.html has no sticky site-header of its own, so a small top gap
+   (not a header-height offset) is all that's needed. */
+.builder-preview-col { min-width: 0; position: sticky; top: 24px; align-self: start; }
 .builder-preview-panel {
   background: #fff; border: 1px solid var(--border-2); padding: 24px;
   display: flex; align-items: center; justify-content: center; min-height: 260px;
@@ -940,7 +943,8 @@ body.is-authed .auth-user-only { display: inline-block; }
 .builder-pick { display: block; width: 100%; background: none; border: none; padding: 0; margin: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
 .builder-pick:disabled { cursor: not-allowed; }
 .builder-option { position: relative; }
-.builder-option.is-selected { border-color: var(--yellow); box-shadow: 0 0 0 2px var(--yellow); }
+.builder-option.is-selected { border-color: var(--text-dim); box-shadow: 0 0 0 2px var(--text-dim); }
+.builder-option.is-selected .style-icon-name { background: var(--text-dim); color: #fff; }
 .builder-option.is-disabled { opacity: 0.35; }
 .builder-option.is-disabled:hover { transform: none; border-color: var(--border-2); box-shadow: none; }
 .builder-option.is-disabled .code { color: #ff9d96; }
@@ -1024,6 +1028,7 @@ body.is-authed .auth-user-only { display: inline-block; }
   .grille-features-grid { grid-template-columns: 1fr; gap: 32px; }
 
   .builder-grid { grid-template-columns: 1fr; gap: 30px; }
+  .builder-preview-col { position: static; top: auto; }
   .builder-progress-seg .t { display: none; }
   .builder-custom-size { grid-template-columns: 1fr; max-width: none; }
   .builder-page-wrap { padding: 0 24px; }
