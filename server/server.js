@@ -27,6 +27,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// /builder was renamed to /doorbuilder — keep old bookmarks/links working.
+app.get('/builder', (req, res) => {
+  const query = req.url.slice(req.path.length);
+  res.redirect(301, '/doorbuilder' + query);
+});
+
 app.use(express.static(SITE_ROOT, { extensions: ['html'] }));
 
 app.listen(PORT, () => {
