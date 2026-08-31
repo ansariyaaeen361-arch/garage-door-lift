@@ -27,11 +27,18 @@
         { id: 's25-20', name: 'S25-20', img: 'assets/model-2.png', sub: 'R-14.7' },
         { id: 's25-30', name: 'S25-30', img: 'assets/model-3.png', sub: 'R-14.7' }
       ],
+      // These represent the 5 marketing product lines (same photos as products.html),
+      // not literal Insulated Panel sub-styles — this step is informational ("which
+      // door look are you after"). The 3D/PDF/review pipeline below this step still
+      // only ever configures an Insulated Panel door regardless of which is picked,
+      // so `pattern` is intentionally omitted — door3dPayload() already falls back
+      // to the 'cassette' panel pattern when a style has none.
       styles: [
-        { id: 'cassette', name: 'Classic Cassette', pattern: 'cassette', img: 'assets/style-icon-cassette.png' },
-        { id: 'carriage-short', name: 'Carriage Short', pattern: 'carriage-short', img: 'assets/style-icon-carriage-short.png' },
-        { id: 'raised-ranch', name: 'Raised Ranch', pattern: 'raised-ranch', img: 'assets/style-icon-raised-ranch.png' },
-        { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' }
+        { id: 'traditional', name: 'Traditional Insulated Panel', img: 'assets/traditional-door.png' },
+        { id: 'modern-flush', name: 'Modern Flush', img: 'assets/modern-flush-door.png' },
+        { id: 'overlay', name: 'Overlay', img: 'assets/overlay-door-a.png' },
+        { id: 'glass', name: 'Glass', img: 'assets/glass-door-a.png' },
+        { id: 'aluminum-grille', name: 'Aluminum Grille', img: 'assets/aluminum-grille-door.png' }
       ],
       colors: [
         { id: 'black', name: 'Black', hex: '#1a1a1a', code: 'RAL 9005' },
