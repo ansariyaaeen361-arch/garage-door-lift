@@ -926,6 +926,7 @@ body.is-authed .auth-user-only { display: inline-block; }
 
 .builder-custom-size { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 420px; margin-top: 18px; }
 .builder-custom-size[hidden] { display: none; }
+#window-row-options[hidden] { display: none; }
 .builder-custom-size label {
   font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--text-dim);
   display: block; margin-bottom: 8px;

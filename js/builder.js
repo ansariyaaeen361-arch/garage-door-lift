@@ -70,10 +70,15 @@
     }
   };
 
+  const WINDOW_ROWS = [
+    { id: 'top', name: 'Top Row' },
+    { id: 'center', name: 'Center Row' }
+  ];
+
   const defaultState = () => ({
     line: 'panel',
     size: null, customWidth: '', customHeight: '',
-    model: null, style: null, color: null, windows: 'none',
+    model: null, style: null, color: null, windows: 'none', windowRow: 'top',
     step: 'size'
   });
 
@@ -102,8 +107,15 @@
   // the step machinery doesn't care whether there's 1 line or several.
   function currentLine() { return LINES[state.line] || LINES.panel; }
   function lineHasModel(line) { return !!line && line.models.length > 1; }
-  function lineHasStyle(line) { return !!line && line.styles.length > 1; }
+  // The 4 sub-styles (Cassette/Carriage Short/Raised Ranch/Carriage Long) are
+  // specific to the Traditional Insulated Panel door — the other 4 Door Style
+  // picks (Modern Flush/Overlay/Glass/Aluminum Grille) skip this step entirely.
+  function lineHasStyle(line) { return !!line && line.styles.length > 1 && state.model === 'traditional'; }
   function lineHasWindows(line) { return !!line && line.windows.length > 0; }
+  // Carriage Short/Long draw one continuous crossbuck spanning the whole door body —
+  // there's no natural "row" to relocate a window into — so the Top/Center choice
+  // only applies to Classic Cassette and Raised Ranch.
+  function styleAllowsWindowRow(styleId) { return styleId === 'cassette' || styleId === 'raised-ranch'; }
 
   // Step order: Size, then Model (Door Style) before Style, then Color/Windows/Review/Quote.
   // No "choose a product line" step — there's only one line, so nothing to choose.
@@ -163,7 +175,10 @@
     const label = line ? line.secondaryLabel : 'Windows';
     if (!s.windows || s.windows === 'none') return `No ${label.toLowerCase()}`;
     const w = findWindow(s.windows);
-    return w ? `${w.name}${w.code ? ` (${w.code})` : ''}` : '';
+    const rowSuffix = styleAllowsWindowRow(s.style)
+      ? ` — ${(WINDOW_ROWS.find((r) => r.id === s.windowRow) || WINDOW_ROWS[0]).name}`
+      : '';
+    return w ? `${w.name}${w.code ? ` (${w.code})` : ''}${rowSuffix}` : '';
   }
 
   // ---------- validation per step ----------
@@ -213,7 +228,8 @@
       colorHex: color ? color.hex : '#8a8a86',
       hasWindow,
       windowImg: windowDef ? windowDef.img : null,
-      windowLayout: windowDef ? windowDef.layout : 'unit'
+      windowLayout: windowDef ? windowDef.layout : 'unit',
+      windowRow: styleAllowsWindowRow(state.style) ? (state.windowRow || 'top') : 'top'
     };
   }
 
@@ -382,6 +398,18 @@
         ${optionCard({ selected: state.windows === w.id, imgSrc: w.img, title: w.name, sub: w.code })}
       </button>`).join('');
     grid.innerHTML = noneCard + cards;
+
+    const rowBox = document.getElementById('window-row-options');
+    if (rowBox) {
+      const hasWindow = state.windows !== 'none' && styleAllowsWindowRow(state.style);
+      rowBox.hidden = !hasWindow;
+      if (hasWindow) {
+        rowBox.innerHTML = WINDOW_ROWS.map((r) => `
+          <button type="button" class="builder-pick" data-pick="windowRow" data-value="${r.id}">
+            ${optionCard({ selected: (state.windowRow || 'top') === r.id, title: r.name })}
+          </button>`).join('');
+      }
+    }
   }
 
   function renderReviewStep() {
@@ -609,7 +637,7 @@
         if (field === 'model') renderModelStep();
         if (field === 'style') renderStyleStep();
         if (field === 'color') renderColorStep();
-        if (field === 'windows') renderWindowsStep();
+        if (field === 'windows' || field === 'windowRow') renderWindowsStep();
         return;
       }
       const goto = e.target.closest('[data-goto]');

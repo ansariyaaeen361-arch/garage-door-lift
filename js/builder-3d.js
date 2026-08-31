@@ -74,6 +74,21 @@ function bakeWindowCanvas(img, layout, cols, w, h) {
   return canvas;
 }
 
+// [[top,bottom], ...] pixel-space vertical segments spanning the door body, with a
+// gap cut out for the window's row when one is present — 2 segments when the window
+// sits in a middle row (not the very top/bottom row), 1 otherwise. Shared by the
+// texture bake (drawing) and the 3D mesh generation (geometry) so both agree exactly
+// on where the crossbuck/braces stop and start around the window.
+function bodySegments(hasWindow, winRowIdx, pad, totalH, cellH, gapY) {
+  if (!hasWindow) return [[pad, pad + totalH]];
+  const winTop = pad + winRowIdx * (cellH + gapY);
+  const winBottom = winTop + cellH;
+  const segs = [];
+  if (winRowIdx > 0) segs.push([pad, winTop]);
+  if (winRowIdx < ROWS - 1) segs.push([winBottom + gapY, pad + totalH]);
+  return segs.length ? segs : [[pad, pad + totalH]];
+}
+
 function relativeLuminance(hex) {
   const c = new THREE.Color(hex);
   return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
@@ -89,7 +104,7 @@ function darken(hex, amount) {
 // reads as carved-in from ANY angle and ANY color — real-time shadow alone (the
 // first version of this prototype) went flat/invisible on light colors viewed
 // close to head-on, since there was nothing but shadow contrast to see.
-function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windowImg, windowLayout) {
+function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windowImg, windowLayout, winRowIdx = 0) {
   const texW = 1536, texH = Math.round(texW * doorH / doorW);
   const canvas = document.createElement('canvas');
   canvas.width = texW; canvas.height = texH;
@@ -150,16 +165,17 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
 
   let windowRect = null;
   if (hasWindow) {
-    windowRect = { x: pad, y: pad, w: totalW, h: cellH };
+    windowRect = { x: pad, y: rowY(winRowIdx), w: totalW, h: cellH };
     const winCanvas = bakeWindowCanvas(windowImg, windowLayout, cols, windowRect.w, windowRect.h);
     ctx.drawImage(winCanvas, windowRect.x, windowRect.y);
     strokeEmbossed(() => { ctx.beginPath(); ctx.rect(windowRect.x + 2, windowRect.y + 2, windowRect.w - 4, windowRect.h - 4); }, 3.5);
   }
-  const startRow = hasWindow ? 1 : 0;
+  const segs = bodySegments(hasWindow, winRowIdx, pad, totalH, cellH, gapY);
 
   if (styleId === 'cassette') {
     const inset = cellW * 0.13;
-    for (let r = startRow; r < ROWS; r++) {
+    for (let r = 0; r < ROWS; r++) {
+      if (hasWindow && r === winRowIdx) continue;
       for (let c = 0; c < cols; c++) {
         const x = colX(c), y = rowY(r);
         const rx = x + inset, ry = y + inset, rw = cellW - inset * 2, rh = cellH - inset * 2;
@@ -169,33 +185,34 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
     }
   } else if (styleId === 'raised-ranch') {
     const inset = cellH * 0.1;
-    for (let r = startRow; r < ROWS; r++) {
+    for (let r = 0; r < ROWS; r++) {
+      if (hasWindow && r === winRowIdx) continue;
       const y = rowY(r) + inset;
       fillRaised(pad + cellW * 0.02, y, totalW - cellW * 0.04, cellH - inset * 2, true);
       strokeEmbossed(() => { ctx.beginPath(); ctx.rect(pad + cellW * 0.02, y, totalW - cellW * 0.04, cellH - inset * 2); }, 3);
     }
   } else if (styleId === 'carriage-short' || styleId === 'carriage-long') {
     const n = styleId === 'carriage-long' ? 6 : 3;
-    const bodyTop = hasWindow ? rowY(1) : pad;
-    const bodyBottom = pad + totalH;
     const barW = Math.max(20, totalW * 0.02);
-    for (let i = 1; i < n; i++) {
-      const x = pad + (totalW / n) * i;
-      strokeRaisedBar(() => { ctx.beginPath(); ctx.moveTo(x, bodyTop + barW / 2 + 4); ctx.lineTo(x, bodyBottom - barW / 2 - 4); }, barW);
-    }
-    [bodyTop + barW / 2 + 2, bodyBottom - barW / 2 - 2].forEach((y) => {
-      strokeRaisedBar(() => { ctx.beginPath(); ctx.moveTo(pad + barW / 2 + 4, y); ctx.lineTo(pad + totalW - barW / 2 - 4, y); }, barW);
+    segs.forEach(([bodyTop, bodyBottom]) => {
+      for (let i = 1; i < n; i++) {
+        const x = pad + (totalW / n) * i;
+        strokeRaisedBar(() => { ctx.beginPath(); ctx.moveTo(x, bodyTop + barW / 2 + 4); ctx.lineTo(x, bodyBottom - barW / 2 - 4); }, barW);
+      }
+      [bodyTop + barW / 2 + 2, bodyBottom - barW / 2 - 2].forEach((y) => {
+        strokeRaisedBar(() => { ctx.beginPath(); ctx.moveTo(pad + barW / 2 + 4, y); ctx.lineTo(pad + totalW - barW / 2 - 4, y); }, barW);
+      });
+      const leaves = Math.max(1, Math.round(cols / 4));
+      const leafW = totalW / leaves;
+      for (let i = 0; i < leaves; i++) {
+        const lx = pad + i * leafW;
+        strokeRaisedBar(() => {
+          ctx.beginPath();
+          ctx.moveTo(lx + 20, bodyBottom - 16);
+          ctx.lineTo(lx + leafW - 20, bodyTop + 16);
+        }, barW * 0.85);
+      }
     });
-    const leaves = Math.max(1, Math.round(cols / 4));
-    const leafW = totalW / leaves;
-    for (let i = 0; i < leaves; i++) {
-      const lx = pad + i * leafW;
-      strokeRaisedBar(() => {
-        ctx.beginPath();
-        ctx.moveTo(lx + 20, bodyBottom - 16);
-        ctx.lineTo(lx + leafW - 20, bodyTop + 16);
-      }, barW * 0.85);
-    }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -204,7 +221,7 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
   texture.needsUpdate = true;
 
   return {
-    texture, windowRect, texW, texH, pad, gapX, gapY, cellW, cellH,
+    texture, windowRect, texW, texH, pad, gapX, gapY, cellW, cellH, bodySegments: segs,
     toWorld(x, y, w, h) {
       const scale = doorW / texW;
       return {
@@ -334,10 +351,13 @@ export function createDoorScene(container) {
 
   let lastRequestedWindowImg = null;
 
-  function update({ cols, style, colorHex, hasWindow, windowImg, windowLayout }) {
+  function update({ cols, style, colorHex, hasWindow, windowImg, windowLayout, windowRow }) {
     cols = Math.max(3, Math.min(12, cols || 4));
     const doorW = cols * CELL_W + (cols - 1) * GAP;
     const doorH = ROWS * CELL_H + (ROWS - 1) * GAP;
+    // 'center' sits one row below the top (row 1 of 0..ROWS-1) — matches the option
+    // shown in the Windows step, not a strict geometric middle of the door.
+    const winRowIdx = windowRow === 'center' ? 1 : 0;
 
     // The window art loads async — draw with whatever's already cached right now
     // (a plain placeholder the very first time a given design is picked), then
@@ -347,7 +367,7 @@ export function createDoorScene(container) {
     if (hasWindow && windowImg && !getLoadedImg(windowImg)) {
       preloadImage(windowImg).then(() => {
         if (lastRequestedWindowImg === windowImg) {
-          update({ cols, style, colorHex, hasWindow, windowImg, windowLayout });
+          update({ cols, style, colorHex, hasWindow, windowImg, windowLayout, windowRow });
         }
       });
     }
@@ -367,7 +387,7 @@ export function createDoorScene(container) {
     if (doorMeshGroup) doorGroup.remove(doorMeshGroup);
     doorMeshGroup = new THREE.Group();
 
-    const baked = bakeDoorTexture(style, colorHex, cols, hasWindow, doorW, doorH, loadedWindowImg, windowLayout);
+    const baked = bakeDoorTexture(style, colorHex, cols, hasWindow, doorW, doorH, loadedWindowImg, windowLayout, winRowIdx);
     const bodyMat = new THREE.MeshPhysicalMaterial({
       map: baked.texture, color: 0xffffff, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
     });
@@ -380,10 +400,9 @@ export function createDoorScene(container) {
     base.castShadow = true; base.receiveShadow = true;
     doorMeshGroup.add(base);
 
-    const startRow = hasWindow ? 1 : 0;
-
     if (style === 'cassette') {
-      for (let r = startRow; r < ROWS; r++) {
+      for (let r = 0; r < ROWS; r++) {
+        if (hasWindow && r === winRowIdx) continue;
         for (let c = 0; c < cols; c++) {
           const x = baked.pad + c * (baked.cellW + baked.gapX);
           const y = baked.pad + r * (baked.cellH + baked.gapY);
@@ -397,7 +416,8 @@ export function createDoorScene(container) {
         }
       }
     } else if (style === 'raised-ranch') {
-      for (let r = startRow; r < ROWS; r++) {
+      for (let r = 0; r < ROWS; r++) {
+        if (hasWindow && r === winRowIdx) continue;
         const yTop = baked.pad + r * (baked.cellH + baked.gapY);
         const vInset = baked.cellH * 0.1;
         const hInset = baked.cellW * 0.02;
@@ -413,40 +433,40 @@ export function createDoorScene(container) {
       }
     } else if (style === 'carriage-short' || style === 'carriage-long') {
       const n = style === 'carriage-long' ? 6 : 3;
-      const bodyTopPx = hasWindow ? baked.pad + (baked.cellH + baked.gapY) : baked.pad;
-      const bodyBottomPx = baked.texH - baked.pad;
       const stileWpx = Math.max(20, (baked.texW - baked.pad * 2) * 0.02); // matches the texture's barW
-      for (let i = 1; i < n; i++) {
-        const xPx = baked.pad + ((baked.texW - baked.pad * 2) / n) * i - stileWpx / 2;
-        const w = baked.toWorld(0, 0, stileWpx, bodyBottomPx - bodyTopPx - 16);
-        const pos = baked.toWorld(xPx, bodyTopPx + 8, stileWpx, bodyBottomPx - bodyTopPx - 16);
-        const stile = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
-        stile.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
-        stile.castShadow = true; stile.receiveShadow = true;
-        doorMeshGroup.add(stile);
-      }
-      [bodyTopPx + 8, bodyBottomPx - 8].forEach((yPx) => {
-        const w = baked.toWorld(0, 0, baked.texW - baked.pad * 2, stileWpx);
-        const pos = baked.toWorld(baked.pad, yPx - stileWpx / 2, baked.texW - baked.pad * 2, stileWpx);
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
-        rail.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
-        rail.castShadow = true; rail.receiveShadow = true;
-        doorMeshGroup.add(rail);
-      });
-      const leaves = Math.max(1, Math.round(cols / 4));
-      const leafWpx = (baked.texW - baked.pad * 2) / leaves;
-      const braceLenPx = Math.hypot(leafWpx - 28, bodyBottomPx - bodyTopPx - 24);
       const braceScale = doorW / baked.texW;
-      for (let i = 0; i < leaves; i++) {
-        const lxPx = baked.pad + i * leafWpx;
-        const centerPx = { x: lxPx + leafWpx / 2, y: (bodyTopPx + bodyBottomPx) / 2 };
-        const pos = baked.toWorld(centerPx.x, centerPx.y, 0, 0);
-        const brace = new THREE.Mesh(new THREE.BoxGeometry(braceLenPx * braceScale, stileWpx * braceScale * 0.85, RAISE), flatMat);
-        brace.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
-        brace.rotation.z = Math.atan2(bodyBottomPx - bodyTopPx - 24, leafWpx - 28);
-        brace.castShadow = true; brace.receiveShadow = true;
-        doorMeshGroup.add(brace);
-      }
+      baked.bodySegments.forEach(([bodyTopPx, bodyBottomPx]) => {
+        for (let i = 1; i < n; i++) {
+          const xPx = baked.pad + ((baked.texW - baked.pad * 2) / n) * i - stileWpx / 2;
+          const w = baked.toWorld(0, 0, stileWpx, bodyBottomPx - bodyTopPx - 16);
+          const pos = baked.toWorld(xPx, bodyTopPx + 8, stileWpx, bodyBottomPx - bodyTopPx - 16);
+          const stile = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
+          stile.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
+          stile.castShadow = true; stile.receiveShadow = true;
+          doorMeshGroup.add(stile);
+        }
+        [bodyTopPx + 8, bodyBottomPx - 8].forEach((yPx) => {
+          const w = baked.toWorld(0, 0, baked.texW - baked.pad * 2, stileWpx);
+          const pos = baked.toWorld(baked.pad, yPx - stileWpx / 2, baked.texW - baked.pad * 2, stileWpx);
+          const rail = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
+          rail.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
+          rail.castShadow = true; rail.receiveShadow = true;
+          doorMeshGroup.add(rail);
+        });
+        const leaves = Math.max(1, Math.round(cols / 4));
+        const leafWpx = (baked.texW - baked.pad * 2) / leaves;
+        const braceLenPx = Math.hypot(leafWpx - 28, bodyBottomPx - bodyTopPx - 24);
+        for (let i = 0; i < leaves; i++) {
+          const lxPx = baked.pad + i * leafWpx;
+          const centerPx = { x: lxPx + leafWpx / 2, y: (bodyTopPx + bodyBottomPx) / 2 };
+          const pos = baked.toWorld(centerPx.x, centerPx.y, 0, 0);
+          const brace = new THREE.Mesh(new THREE.BoxGeometry(braceLenPx * braceScale, stileWpx * braceScale * 0.85, RAISE), flatMat);
+          brace.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
+          brace.rotation.z = Math.atan2(bodyBottomPx - bodyTopPx - 24, leafWpx - 28);
+          brace.castShadow = true; brace.receiveShadow = true;
+          doorMeshGroup.add(brace);
+        }
+      });
       const handle = new THREE.Mesh(
         new THREE.CylinderGeometry(0.018, 0.018, 0.16, 12),
         new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35, metalness: 0.6 })
