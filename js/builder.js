@@ -105,13 +105,13 @@
   function lineHasStyle(line) { return !!line && line.styles.length > 1; }
   function lineHasWindows(line) { return !!line && line.windows.length > 0; }
 
-  // Step order: Size, then Style before Model, then Color/Windows/Review/Quote.
+  // Step order: Size, then Model (Door Style) before Style, then Color/Windows/Review/Quote.
   // No "choose a product line" step — there's only one line, so nothing to choose.
   function getSteps() {
     const line = currentLine();
     const steps = ['size'];
-    if (lineHasStyle(line)) steps.push('style');
     if (lineHasModel(line)) steps.push('model');
+    if (lineHasStyle(line)) steps.push('style');
     steps.push('color');
     if (lineHasWindows(line)) steps.push('windows');
     steps.push('review', 'quote');
