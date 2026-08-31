@@ -55,7 +55,7 @@ function generatePdf({ filePath, publicId, config, contact }) {
     section('Door Configuration', [
       ['Product Line', config.lineLabel],
       ['Size', config.sizeLabel],
-      ['Model', config.modelLabel],
+      ['Door Style', config.modelLabel],
       ['Style', config.styleLabel],
       ['Color', config.colorLabel],
       [config.secondaryLabel || 'Windows', config.windowLabel],
