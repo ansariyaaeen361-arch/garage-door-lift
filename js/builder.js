@@ -14,6 +14,64 @@
     { id: 'custom', label: 'Custom Size', dims: 'Enter your own dimensions', cols: null }
   ];
 
+  // Color palettes are keyed by which Door Style (line) was picked in the Model
+  // step — each product line has its own real catalog colors (the catalog PDF
+  // gives each line a distinct "COLOR"/"COLORS" page). Reuses the exact hex values
+  // already chosen for these swatches on that line's own product page
+  // (product-flush.html, product-overlay.html, product-grille.html,
+  // product-glass.html) so the builder and the product pages agree.
+  const COLOR_PALETTES = {
+    traditional: [
+      { id: 'black', name: 'Black', hex: '#1a1a1a', code: 'RAL 9005' },
+      { id: 'white', name: 'White', hex: '#f2f2ee', code: 'RAL 9016' },
+      { id: 'almond', name: 'Almond', hex: '#cfc9b8', code: 'RAL 9005' }
+    ],
+    'modern-flush': [
+      { id: 'dark-oak', name: 'Dark Oak', hex: '#4a2e1a', code: 'WOODGRAIN' },
+      { id: 'light-oak', name: 'Light Oak', hex: '#b8875a', code: 'WOODGRAIN' },
+      { id: 'red-oak', name: 'Red Oak', hex: '#9c4f2e', code: 'WOODGRAIN' },
+      { id: 'carbon-oak', name: 'Carbon Oak', hex: '#c99a4a', code: 'WOODGRAIN' },
+      { id: 'dark-walnut', name: 'Dark Walnut', hex: '#7d8791', code: 'WOODGRAIN' },
+      { id: 'black-walnut', name: 'Black Walnut', hex: '#6e2f1f', code: 'WOODGRAIN' },
+      { id: 'black', name: 'Black', hex: '#1a1a1a', code: 'SOLID' },
+      { id: 'white', name: 'White', hex: '#eceae4', code: 'SOLID' }
+    ],
+    overlay: [
+      { id: 'chocolate-brown', name: 'Chocolate Brown', hex: '#3a2a20', code: 'RAL 8077' },
+      { id: 'basic-grey', name: 'Basic Grey', hex: '#54585c', code: 'RAL 7014' },
+      { id: 'white', name: 'White', hex: '#eceae4', code: 'RAL 9016' },
+      { id: 'brown-suede', name: 'Brown Suede', hex: '#4a3226', code: 'RAL 8077' },
+      { id: 'matte-black', name: 'Matte Black', hex: '#141414', code: 'RAL 8077' },
+      { id: 'light-oak', name: 'Light Oak', hex: '#b8875a', code: 'PL-OK01' },
+      { id: 'dark-oak', name: 'Dark Oak', hex: '#5a3a24', code: 'PL-OK02' },
+      { id: 'white-suede', name: 'White Suede', hex: '#dcd8ce', code: 'RAL 8014' },
+      { id: 'black-walnut', name: 'Black Walnut', hex: '#4a3628', code: 'PL-WT02' }
+    ],
+    glass: [
+      { id: 'standard-white', name: 'Standard White', hex: '#eceae4', code: 'FRAME' },
+      { id: 'chocolate', name: 'Chocolate', hex: '#3a2a20', code: 'FRAME' },
+      { id: 'bronze', name: 'Bronze', hex: '#8a5a2e', code: 'FRAME' },
+      { id: 'black', name: 'Black', hex: '#1a1a1a', code: 'FRAME' }
+    ],
+    'aluminum-grille': [
+      { id: 'cdm-3001', name: 'CDM 3001', hex: '#d9c8a0', code: 'BATTEN' },
+      { id: 'cdm-3002', name: 'CDM 3002', hex: '#a97c46', code: 'BATTEN' },
+      { id: 'cdm-3003', name: 'CDM 3003', hex: '#c9a877', code: 'BATTEN' },
+      { id: 'cdm-3004', name: 'CDM 3004', hex: '#7a3f2a', code: 'BATTEN' },
+      { id: 'cdm-3005', name: 'CDM 3005', hex: '#e0d3ae', code: 'BATTEN' },
+      { id: 'cdm-3006', name: 'CDM 3006', hex: '#5c3d28', code: 'BATTEN' },
+      { id: 'cdm-3007', name: 'CDM 3007', hex: '#c9812f', code: 'BATTEN' },
+      { id: 'cdm-3008', name: 'CDM 3008', hex: '#4a4038', code: 'BATTEN' },
+      { id: 'cdm-3009', name: 'CDM 3009', hex: '#8a8a72', code: 'BATTEN' },
+      { id: 'shining-gold', name: 'Shining Gold', hex: '#b8963f', code: '3010' },
+      { id: 'matte-black', name: 'Matte Black', hex: '#141414', code: '3011' },
+      { id: 'matte-white', name: 'Matte White', hex: '#eceae4', code: '3012' },
+      { id: 'matte-gray', name: 'Matte Gray', hex: '#6b6b6b', code: '3013' },
+      { id: 'woven-design', name: 'Woven Design', hex: '#d4d0c5', code: '3015' }
+    ]
+  };
+  function currentColors() { return COLOR_PALETTES[state.model] || COLOR_PALETTES.traditional; }
+
   // Only one product line for now — the wizard has no "choose a product line" step,
   // it goes straight to Size. Kept as a keyed LINES object (rather than a bare
   // constant) so the step machinery below (currentLine/lineHasModel/etc.) doesn't
@@ -39,11 +97,6 @@
         { id: 'carriage-short', name: 'Carriage Short', pattern: 'carriage-short', img: 'assets/style-icon-carriage-short.png' },
         { id: 'raised-ranch', name: 'Raised Ranch', pattern: 'raised-ranch', img: 'assets/style-icon-raised-ranch.png' },
         { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' }
-      ],
-      colors: [
-        { id: 'black', name: 'Black', hex: '#1a1a1a', code: 'RAL 9005' },
-        { id: 'white', name: 'White', hex: '#f2f2ee', code: 'RAL 9016' },
-        { id: 'almond', name: 'Almond', hex: '#cfc9b8', code: 'RAL 9005' }
       ],
       // layout 'unit' = one self-contained window icon, tiled per column (contain-fit).
       // layout 'strip' = source image already spans a full double-door row (two window
@@ -157,7 +210,7 @@
   const findSize = (id) => SIZES.find((s) => s.id === id);
   const findModel = (id) => { const l = currentLine(); return l ? l.models.find((m) => m.id === id) : null; };
   const findStyle = (id) => { const l = currentLine(); return l ? l.styles.find((s) => s.id === id) : null; };
-  const findColor = (id) => { const l = currentLine(); return l ? l.colors.find((c) => c.id === id) : null; };
+  const findColor = (id) => currentColors().find((c) => c.id === id);
   const findWindow = (id) => { const l = currentLine(); return l ? l.windows.find((w) => w.id === id) : null; };
 
   function sizeLabel(s) {
@@ -375,8 +428,7 @@
 
   function renderColorStep() {
     const grid = document.getElementById('color-options');
-    const line = currentLine();
-    const colors = line ? line.colors : [];
+    const colors = currentColors();
     grid.innerHTML = colors.map((c) => `
       <button type="button" class="builder-pick" data-pick="color" data-value="${c.id}">
         ${optionCard({ selected: state.color === c.id, title: c.name, sub: c.code, onSwatch: c.hex })}
@@ -628,6 +680,11 @@
       if (pick) {
         const field = pick.dataset.pick;
         const value = pick.dataset.value;
+        // Each Door Style has its own color palette (see COLOR_PALETTES) — a color
+        // id picked under one palette isn't meaningful under another, so switching
+        // Door Style clears any previously chosen color rather than silently
+        // carrying over a stale (and possibly wrong) selection.
+        if (field === 'model' && state.model !== value) state.color = null;
         state[field] = value;
         setError(null);
         saveState();
