@@ -391,9 +391,9 @@ body.is-authed .auth-user-only { display: inline-block; }
 
 /* ---------- style gallery ---------- */
 .gallery-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
-.gallery-item { position: relative; border: 1px solid #242424; overflow: hidden; transition: border-color 0.25s ease; align-self: center; }
+.gallery-item { position: relative; border: 1px solid #242424; overflow: hidden; transition: border-color 0.25s ease; }
 .gallery-item:hover { border-color: var(--yellow); }
-.gallery-item img { width: 100%; height: auto; display: block; transition: transform 0.5s ease; }
+.gallery-item img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; transition: transform 0.5s ease; }
 .gallery-item:hover img { transform: scale(1.08); }
 .gallery-item .label {
   position: absolute; left: 0; bottom: 0; background: rgba(11,11,11,0.82); color: var(--text);
