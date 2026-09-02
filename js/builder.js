@@ -72,6 +72,23 @@
   };
   function currentColors() { return COLOR_PALETTES[state.model] || COLOR_PALETTES.traditional; }
 
+  // Sub-styles are keyed by Door Style too — Traditional's product page shows all 4
+  // (Cassette/Carriage Short/Raised Ranch/Carriage Long); Non-Insulated's own page
+  // only carries Cassette + Raised Ranch (Carriage Short/Long were dropped there),
+  // so the builder mirrors that instead of offering styles that page doesn't have.
+  // No other Door Style has a Style step at all.
+  const STYLE_ENTRIES = {
+    cassette: { id: 'cassette', name: 'Classic Cassette', pattern: 'cassette', img: 'assets/style-icon-cassette.png' },
+    'carriage-short': { id: 'carriage-short', name: 'Carriage Short', pattern: 'carriage-short', img: 'assets/style-icon-carriage-short.png' },
+    'raised-ranch': { id: 'raised-ranch', name: 'Raised Ranch', pattern: 'raised-ranch', img: 'assets/style-icon-raised-ranch.png' },
+    'carriage-long': { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' }
+  };
+  const STYLES_BY_MODEL = {
+    traditional: [STYLE_ENTRIES.cassette, STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['raised-ranch'], STYLE_ENTRIES['carriage-long']],
+    'non-insulated': [STYLE_ENTRIES.cassette, STYLE_ENTRIES['raised-ranch']]
+  };
+  function currentStyles() { return STYLES_BY_MODEL[state.model] || []; }
+
   // Only one product line for now — the wizard has no "choose a product line" step,
   // it goes straight to Size. Kept as a keyed LINES object (rather than a bare
   // constant) so the step machinery below (currentLine/lineHasModel/etc.) doesn't
@@ -92,12 +109,6 @@
         { id: 'glass', name: 'Glass Garage Doors', img: 'assets/glass-garage-door.png' },
         { id: 'aluminum-grille', name: 'Aluminum Grille Doors', img: 'assets/aluminum-grille-door.png' },
         { id: 'non-insulated', name: 'Non-Insulated Panel Doors', img: 'assets/non-insulated-garage-door.png' }
-      ],
-      styles: [
-        { id: 'cassette', name: 'Classic Cassette', pattern: 'cassette', img: 'assets/style-icon-cassette.png' },
-        { id: 'carriage-short', name: 'Carriage Short', pattern: 'carriage-short', img: 'assets/style-icon-carriage-short.png' },
-        { id: 'raised-ranch', name: 'Raised Ranch', pattern: 'raised-ranch', img: 'assets/style-icon-raised-ranch.png' },
-        { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' }
       ],
       // layout 'unit' = one self-contained window icon, tiled per column (contain-fit).
       // layout 'strip' = source image already spans a full double-door row (two window
@@ -161,10 +172,9 @@
   // the step machinery doesn't care whether there's 1 line or several.
   function currentLine() { return LINES[state.line] || LINES.panel; }
   function lineHasModel(line) { return !!line && line.models.length > 1; }
-  // The 4 sub-styles (Cassette/Carriage Short/Raised Ranch/Carriage Long) are
-  // specific to the Traditional Insulated Panel door — the other 4 Door Style
-  // picks (Modern Flush/Overlay/Glass/Aluminum Grille) skip this step entirely.
-  function lineHasStyle(line) { return !!line && line.styles.length > 1 && state.model === 'traditional'; }
+  // Only Door Styles with a real "Door Styles" section on their own product page
+  // (Traditional, Non-Insulated) get this step — see STYLES_BY_MODEL.
+  function lineHasStyle(line) { return !!line && currentStyles().length > 1; }
   function lineHasWindows(line) { return !!line && line.windows.length > 0; }
   // Carriage Short/Long draw one continuous crossbuck spanning the whole door body —
   // there's no natural "row" to relocate a window into — so the Top/Center choice
@@ -210,7 +220,7 @@
   // ---------- lookups ----------
   const findSize = (id) => SIZES.find((s) => s.id === id);
   const findModel = (id) => { const l = currentLine(); return l ? l.models.find((m) => m.id === id) : null; };
-  const findStyle = (id) => { const l = currentLine(); return l ? l.styles.find((s) => s.id === id) : null; };
+  const findStyle = (id) => currentStyles().find((s) => s.id === id);
   const findColor = (id) => currentColors().find((c) => c.id === id);
   const findWindow = (id) => { const l = currentLine(); return l ? l.windows.find((w) => w.id === id) : null; };
 
@@ -411,8 +421,7 @@
 
   function renderStyleStep() {
     const grid = document.getElementById('style-options');
-    const line = currentLine();
-    const styles = line ? line.styles : [];
+    const styles = currentStyles();
     let html = '';
     let lastGroup;
     styles.forEach((s) => {
@@ -681,11 +690,13 @@
       if (pick) {
         const field = pick.dataset.pick;
         const value = pick.dataset.value;
-        // Each Door Style has its own color palette (see COLOR_PALETTES) — a color
-        // id picked under one palette isn't meaningful under another, so switching
-        // Door Style clears any previously chosen color rather than silently
-        // carrying over a stale (and possibly wrong) selection.
-        if (field === 'model' && state.model !== value) state.color = null;
+        // Each Door Style has its own color palette (see COLOR_PALETTES) and its own
+        // set of sub-styles (see STYLES_BY_MODEL, e.g. Traditional has 4, Non-
+        // Insulated has 2, most have none) — a color or style id picked under one
+        // isn't meaningful under another, so switching Door Style clears both
+        // rather than silently carrying over a stale (and possibly invalid)
+        // selection.
+        if (field === 'model' && state.model !== value) { state.color = null; state.style = null; }
         state[field] = value;
         setError(null);
         saveState();
