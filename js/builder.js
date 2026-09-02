@@ -80,7 +80,7 @@
     panel: {
       id: 'panel', name: 'Insulated Panel', heroImg: 'assets/style-icon-cassette.png',
       blurb: 'Classic panel doors, 4 styles', secondaryLabel: 'Windows',
-      // The Model step shows the 5 marketing product lines (same photos as
+      // The Model step shows the 6 marketing product lines (same photos as
       // products.html), not literal Insulated Panel models — it's informational
       // ("which door look are you after"). The 3D/PDF/review pipeline below this
       // step still only ever configures an Insulated Panel door regardless of
@@ -90,7 +90,8 @@
         { id: 'modern-flush', name: 'Modern Flush', img: 'assets/modern-flush-door.png' },
         { id: 'overlay', name: 'Overlay', img: 'assets/overlay-door-a.png' },
         { id: 'glass', name: 'Glass', img: 'assets/glass-door-a.png' },
-        { id: 'aluminum-grille', name: 'Aluminum Grille', img: 'assets/aluminum-grille-door.png' }
+        { id: 'aluminum-grille', name: 'Aluminum Grille', img: 'assets/aluminum-grille-door.png' },
+        { id: 'non-insulated', name: 'Non-Insulated Panel', img: 'assets/non-insulated-garage-door.png' }
       ],
       styles: [
         { id: 'cassette', name: 'Classic Cassette', pattern: 'cassette', img: 'assets/style-icon-cassette.png' },
