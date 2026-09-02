@@ -86,12 +86,12 @@
       // step still only ever configures an Insulated Panel door regardless of
       // which is picked here.
       models: [
-        { id: 'traditional', name: 'Traditional Insulated Panel', img: 'assets/traditional-door.png' },
-        { id: 'modern-flush', name: 'Modern Flush', img: 'assets/modern-flush-door.png' },
-        { id: 'overlay', name: 'Overlay', img: 'assets/overlay-door-a.png' },
-        { id: 'glass', name: 'Glass', img: 'assets/glass-door-a.png' },
-        { id: 'aluminum-grille', name: 'Aluminum Grille', img: 'assets/aluminum-grille-door.png' },
-        { id: 'non-insulated', name: 'Non-Insulated Panel', img: 'assets/non-insulated-garage-door.png' }
+        { id: 'traditional', name: 'Traditional Insulated Panel Doors', img: 'assets/traditional-door.png' },
+        { id: 'modern-flush', name: 'Modern Flush Doors', img: 'assets/modern-flush-door.png' },
+        { id: 'overlay', name: 'Overlay Doors', img: 'assets/overlay-door.png' },
+        { id: 'glass', name: 'Glass Garage Doors', img: 'assets/glass-garage-door.png' },
+        { id: 'aluminum-grille', name: 'Aluminum Grille Doors', img: 'assets/aluminum-grille-door.png' },
+        { id: 'non-insulated', name: 'Non-Insulated Panel Doors', img: 'assets/non-insulated-garage-door.png' }
       ],
       styles: [
         { id: 'cassette', name: 'Classic Cassette', pattern: 'cassette', img: 'assets/style-icon-cassette.png' },
