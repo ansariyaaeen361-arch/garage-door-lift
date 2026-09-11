@@ -16,3 +16,6 @@ Thumbs.db
 # env files (if you ever add one)
 .env
 .env.*
+
+# raw uploaded originals — cleaned/renamed copies live in assets/gallery/ instead
+assets/gallery image/
