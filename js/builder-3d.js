@@ -46,12 +46,28 @@ function getLoadedImg(src) {
 // preserving what little shading variation the source art has.
 const FRAME_REFERENCE_LUMINANCE = 195;
 const FRAME_LUMINANCE_THRESHOLD = 140;
+// Canvas 2D pixel data is always plain sRGB bytes. THREE.Color, though, applies
+// color management: constructing it from a hex/CSS string converts into LINEAR
+// space, so reading .r/.g/.b back out (as this used to) silently hands you a
+// darker, desaturated value instead of the sRGB byte the door material actually
+// displays as. Parsing the hex directly (no THREE.Color involved) keeps this in
+// the same sRGB space as the canvas pixels it's blended into.
+function hexToSrgbBytes(colorHex) {
+  let n;
+  if (typeof colorHex === 'number') {
+    n = colorHex;
+  } else {
+    const h = String(colorHex).replace('#', '');
+    const full = h.length === 3 ? h.split('').map((ch) => ch + ch).join('') : h;
+    n = parseInt(full, 16);
+  }
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+}
 function tintWindowFrame(canvas, colorHex) {
   const ctx = canvas.getContext('2d');
   const { width, height } = canvas;
   if (!width || !height) return;
-  const c = new THREE.Color(colorHex);
-  const cr = c.r * 255, cg = c.g * 255, cb = c.b * 255;
+  const [cr, cg, cb] = hexToSrgbBytes(colorHex);
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
@@ -279,8 +295,14 @@ function addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols,
 
   // A dedicated material (not the shared frameMaterial used for the door's outer
   // trim bars) so the window frame can match the selected door color without
-  // recoloring that unrelated trim.
-  const windowFrameMaterial = new THREE.MeshStandardMaterial({ color: colorHex || 0xe7e4da, roughness: 0.7, metalness: 0.05 });
+  // recoloring that unrelated trim. Same MeshPhysicalMaterial recipe (roughness/
+  // clearcoat) as the door's own raised panel cells (flatMat, below) — using
+  // MeshStandardMaterial here with different roughness/no clearcoat made the
+  // frame respond to scene lighting differently and look like a different color
+  // even with the exact same colorHex.
+  const windowFrameMaterial = new THREE.MeshPhysicalMaterial({
+    color: colorHex || 0xe7e4da, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
+  });
   const frame = new THREE.Mesh(new THREE.BoxGeometry(fw.w, fw.h, RAISE * 0.9), windowFrameMaterial);
   frame.position.set(fpos.cx, fpos.cy, baseFrontZ + RAISE * 0.45);
   frame.castShadow = true; frame.receiveShadow = true;
@@ -289,9 +311,13 @@ function addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols,
   const winTexCanvas = bakeWindowCanvas(loadedWindowImg, windowLayout, cols, 1200, Math.max(1, Math.round(1200 * wr.h / wr.w)), colorHex);
   const winTexture = new THREE.CanvasTexture(winTexCanvas);
   winTexture.colorSpace = THREE.SRGBColorSpace;
+  // Opaque, same lighting recipe as the door body (flatMat) and the frame box
+  // above — `transmission`/`ior`/transparency here previously made this mesh
+  // render as physical glass, which pulls in background/refraction shading and
+  // darkens + desaturates the baked-in frame tint so it no longer matches the
+  // door color even though the texture itself was tinted correctly.
   const glassMat = new THREE.MeshPhysicalMaterial({
-    map: winTexture, color: 0xffffff, roughness: 0.12, metalness: 0.05,
-    transmission: 0.3, thickness: 0.05, ior: 1.4, transparent: true, opacity: 0.97
+    map: winTexture, roughness: 0.3, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.2
   });
   const glassInset = wr.w * 0.006;
   const gw = baked.toWorld(0, 0, wr.w - glassInset * 2, wr.h - glassInset * 2);
