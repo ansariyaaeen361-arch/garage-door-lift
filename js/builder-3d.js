@@ -35,6 +35,33 @@ function getLoadedImg(src) {
   return entry && entry.loaded ? entry.img : null;
 }
 
+// Every window design PNG is drawn the same way: a light neutral-gray frame
+// (luminance well above the dark blue-gray "glass" fill) around the glass. That
+// consistent split means the frame can be recolored to match the selected door
+// color without separate per-window frame art — multiply-blend (like the door
+// panel's own color tinting) every pixel bright enough to be frame, and leave
+// anything darker (the glass) untouched.
+const FRAME_LUMINANCE_THRESHOLD = 140;
+function tintWindowFrame(canvas, colorHex) {
+  const ctx = canvas.getContext('2d');
+  const { width, height } = canvas;
+  if (!width || !height) return;
+  const c = new THREE.Color(colorHex);
+  const cr = c.r * 255, cg = c.g * 255, cb = c.b * 255;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (luminance > FRAME_LUMINANCE_THRESHOLD) {
+      data[i] = (r * cr) / 255;
+      data[i + 1] = (g * cg) / 255;
+      data[i + 2] = (b * cb) / 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
 // Draws the *actual* selected window design into a w x h canvas — this used to just
 // be a flat grey placeholder rect regardless of which of the 16 designs was picked,
 // so switching designs visually did nothing. 'strip' art already spans a full
@@ -42,8 +69,8 @@ function getLoadedImg(src) {
 // stretched once, uncropped, to fill whatever width this door turned out to be —
 // never cropped, so no pane can get sliced/torn on an odd column count. 'unit' art
 // is one self-contained icon, tiled per column with contain-fit so it's never
-// distorted.
-function bakeWindowCanvas(img, layout, cols, w, h) {
+// distorted. colorHex (optional) recolors the frame to match the selected door color.
+function bakeWindowCanvas(img, layout, cols, w, h, colorHex) {
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(w));
   canvas.height = Math.max(1, Math.round(h));
@@ -71,6 +98,7 @@ function bakeWindowCanvas(img, layout, cols, w, h) {
       }
     }
   }
+  if (colorHex) tintWindowFrame(canvas, colorHex);
   return canvas;
 }
 
@@ -166,7 +194,7 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
   let windowRect = null;
   if (hasWindow) {
     windowRect = { x: pad, y: rowY(winRowIdx), w: totalW, h: cellH };
-    const winCanvas = bakeWindowCanvas(windowImg, windowLayout, cols, windowRect.w, windowRect.h);
+    const winCanvas = bakeWindowCanvas(windowImg, windowLayout, cols, windowRect.w, windowRect.h, colorHex);
     ctx.drawImage(winCanvas, windowRect.x, windowRect.y);
     strokeEmbossed(() => { ctx.beginPath(); ctx.rect(windowRect.x + 2, windowRect.y + 2, windowRect.w - 4, windowRect.h - 4); }, 3.5);
   }
@@ -237,19 +265,23 @@ const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xe7e4da, roughnes
 
 // Frame + glass mesh spanning a whole pixel-space row, textured with the actual
 // selected window design.
-function addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols) {
+function addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols, colorHex) {
   if (!baked.windowRect) return;
   const wr = baked.windowRect;
   const inset = wr.w * 0.01;
   const fw = baked.toWorld(0, 0, wr.w - inset * 2, wr.h - inset * 2);
   const fpos = baked.toWorld(wr.x + inset, wr.y + inset, wr.w - inset * 2, wr.h - inset * 2);
 
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(fw.w, fw.h, RAISE * 0.9), frameMaterial);
+  // A dedicated material (not the shared frameMaterial used for the door's outer
+  // trim bars) so the window frame can match the selected door color without
+  // recoloring that unrelated trim.
+  const windowFrameMaterial = new THREE.MeshStandardMaterial({ color: colorHex || 0xe7e4da, roughness: 0.7, metalness: 0.05 });
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(fw.w, fw.h, RAISE * 0.9), windowFrameMaterial);
   frame.position.set(fpos.cx, fpos.cy, baseFrontZ + RAISE * 0.45);
   frame.castShadow = true; frame.receiveShadow = true;
   doorMeshGroup.add(frame);
 
-  const winTexCanvas = bakeWindowCanvas(loadedWindowImg, windowLayout, cols, 1200, Math.max(1, Math.round(1200 * wr.h / wr.w)));
+  const winTexCanvas = bakeWindowCanvas(loadedWindowImg, windowLayout, cols, 1200, Math.max(1, Math.round(1200 * wr.h / wr.w)), colorHex);
   const winTexture = new THREE.CanvasTexture(winTexCanvas);
   winTexture.colorSpace = THREE.SRGBColorSpace;
   const glassMat = new THREE.MeshPhysicalMaterial({
@@ -478,7 +510,7 @@ export function createDoorScene(container) {
     }
 
     if (hasWindow) {
-      addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols);
+      addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols, colorHex);
     }
 
     doorGroup.add(doorMeshGroup);
