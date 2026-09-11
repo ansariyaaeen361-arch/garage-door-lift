@@ -38,9 +38,13 @@ function getLoadedImg(src) {
 // Every window design PNG is drawn the same way: a light neutral-gray frame
 // (luminance well above the dark blue-gray "glass" fill) around the glass. That
 // consistent split means the frame can be recolored to match the selected door
-// color without separate per-window frame art — multiply-blend (like the door
-// panel's own color tinting) every pixel bright enough to be frame, and leave
-// anything darker (the glass) untouched.
+// color without separate per-window frame art. The frame's actual gray is ~193,
+// not white (255) — multiplying by colorHex/255 against a raw 255 reference left
+// every recolored frame ~24% darker than the door's true color, a visible
+// mismatch. Normalizing against the frame's real reference brightness first
+// makes the dominant frame tone land on the exact door color, while still
+// preserving what little shading variation the source art has.
+const FRAME_REFERENCE_LUMINANCE = 195;
 const FRAME_LUMINANCE_THRESHOLD = 140;
 function tintWindowFrame(canvas, colorHex) {
   const ctx = canvas.getContext('2d');
@@ -54,9 +58,10 @@ function tintWindowFrame(canvas, colorHex) {
     const r = data[i], g = data[i + 1], b = data[i + 2];
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
     if (luminance > FRAME_LUMINANCE_THRESHOLD) {
-      data[i] = (r * cr) / 255;
-      data[i + 1] = (g * cg) / 255;
-      data[i + 2] = (b * cb) / 255;
+      const shade = Math.min(1, luminance / FRAME_REFERENCE_LUMINANCE);
+      data[i] = Math.min(255, shade * cr);
+      data[i + 1] = Math.min(255, shade * cg);
+      data[i + 2] = Math.min(255, shade * cb);
     }
   }
   ctx.putImageData(imageData, 0, 0);
