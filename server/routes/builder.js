@@ -52,10 +52,10 @@ function generatePdf({ filePath, publicId, config, contact }) {
     // (e.g. Aluminum Grille has no model/style/windows choice) — section() drops
     // any row with an empty value instead of printing a bare "—" line for it.
     section('Door Configuration', [
-      ['Product Line', config.lineLabel],
+      ['Category', config.lineLabel],
       ['Size', config.sizeLabel],
-      ['Door Style', config.modelLabel],
-      ['Style', config.styleLabel],
+      ['Product Line', config.modelLabel],
+      ['Panel Design', config.styleLabel],
       ['Color', config.colorLabel],
       [config.secondaryLabel || 'Windows', config.windowLabel],
       ['Quantity', contact.quantity]

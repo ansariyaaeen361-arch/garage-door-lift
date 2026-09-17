@@ -184,13 +184,18 @@
   // only applies to Classic Cassette and Raised Ranch.
   function styleAllowsWindowRow(styleId) { return styleId === 'cassette' || styleId === 'raised-ranch'; }
 
-  // Step order: Size, then Model (Door Style) before Style, then Color/Windows/Review/Quote.
-  // No "choose a product line" step — there's only one line, so nothing to choose.
+  // Step order: Size, then Model (Product Line) before Panel Design, then Color/
+  // Windows/Review/Quote. "style" always keeps its slot in this array — even for
+  // product lines that don't use it — so the step COUNT and every later step's
+  // number stay stable regardless of which product line is picked, instead of
+  // Color/Windows/Review/Quote shifting up by one the moment a line that has a
+  // Panel Design step gets selected. isStepUnlocked()/goNext()/goBack() treat an
+  // inapplicable "style" slot as automatically satisfied and skip over it.
   function getSteps() {
     const line = currentLine();
     const steps = ['size'];
     if (lineHasModel(line)) steps.push('model');
-    if (lineHasStyle(line)) steps.push('style');
+    steps.push('style');
     steps.push('color');
     if (lineHasWindows(line)) steps.push('windows');
     steps.push('review', 'quote');
@@ -203,7 +208,7 @@
       return line ? line.secondaryLabel.toUpperCase() : 'WINDOWS';
     }
     const STATIC = {
-      size: 'SIZE', model: 'DOOR STYLE', style: 'STYLE',
+      size: 'SIZE', model: 'PRODUCT LINE', style: 'PANEL DESIGN',
       color: 'COLOR', review: 'REVIEW', quote: 'REQUEST A QUOTE'
     };
     return STATIC[id] || id.toUpperCase();
@@ -261,7 +266,7 @@
       return null;
     }
     if (stepId === 'model') return state.model ? null : 'Please select a model.';
-    if (stepId === 'style') return state.style ? null : 'Please select a style.';
+    if (stepId === 'style') return lineHasStyle(currentLine()) && !state.style ? 'Please select a panel design.' : null;
     if (stepId === 'color') return state.color ? null : 'Please select a color.';
     return null;
   }
@@ -615,11 +620,11 @@
     const style = findStyle(state.style);
     const color = findColor(state.color);
     const rows = [
-      ['Product Line', line ? line.name : '—'],
+      ['Category', line ? line.name : '—'],
       ['Size', sizeLabel(state)]
     ];
-    if (lineHasModel(line)) rows.push(['Door Style', model ? `${model.name}${model.sub ? ` — ${model.sub}` : ''}` : '—']);
-    if (lineHasStyle(line)) rows.push(['Style', style ? style.name : '—']);
+    if (lineHasModel(line)) rows.push(['Product Line', model ? `${model.name}${model.sub ? ` — ${model.sub}` : ''}` : '—']);
+    if (lineHasStyle(line)) rows.push(['Panel Design', style ? style.name : '—']);
     rows.push(['Color', color ? `${color.name}${color.code ? ` (${color.code})` : ''}` : '—']);
     if (lineHasWindows(line)) rows.push([line.secondaryLabel, windowLabel(state)]);
     el.innerHTML = rows.map(([k, v]) => `
@@ -656,6 +661,10 @@
   // (and destroy) their saved progress before they ever see the resume banner.
   function showStep(stepId, { persist = true } = {}) {
     const steps = getSteps();
+    // Guard against ever landing directly on the reserved-but-inapplicable
+    // "style" slot (a stray progress-chip click, a resumed draft from before the
+    // current line was picked, etc.) — its grid would just render empty.
+    if (skippableStep(stepId)) stepId = steps[steps.indexOf(stepId) + 1] || 'color';
     if (!isStepUnlocked(stepId)) stepId = steps.find((s) => isStepUnlocked(s) && stepError(s)) || 'size';
     state.step = stepId;
     document.querySelectorAll('.builder-step').forEach((el) => {
@@ -685,17 +694,25 @@
     else { el.textContent = ''; el.classList.remove('show'); }
   }
 
+  // "style" keeps a reserved slot in getSteps() even when the current line has no
+  // Panel Design choice (see getSteps()) — skip straight past it in that case so
+  // the visitor never lands on an empty/inapplicable step.
+  function skippableStep(stepId) {
+    return stepId === 'style' && !lineHasStyle(currentLine());
+  }
   function goNext() {
     const err = stepError(state.step);
     if (err) { setError(err); return; }
     const steps = getSteps();
-    const idx = steps.indexOf(state.step);
-    if (idx < steps.length - 1) showStep(steps[idx + 1]);
+    let idx = steps.indexOf(state.step);
+    do { idx++; } while (idx < steps.length - 1 && skippableStep(steps[idx]));
+    if (idx < steps.length) showStep(steps[idx]);
   }
   function goBack() {
     const steps = getSteps();
-    const idx = steps.indexOf(state.step);
-    if (idx > 0) showStep(steps[idx - 1]);
+    let idx = steps.indexOf(state.step);
+    do { idx--; } while (idx > 0 && skippableStep(steps[idx]));
+    if (idx >= 0) showStep(steps[idx]);
   }
 
   // ---------- quote form ----------

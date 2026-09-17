@@ -565,6 +565,7 @@ img { max-width: 100%; }
 .style-code-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
 .style-code-head .n { font-family: var(--font-display); font-size: 22px; text-transform: uppercase; color: var(--text); }
 .style-code-head .m { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--text-dim); }
+.style-code-desc { font-size: 13px; color: var(--text-dim); margin: -8px 0 16px; }
 .style-code-chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .style-code-chip {
   border: 1px solid var(--border-3); padding: 9px 16px; font-family: var(--font-mono); font-size: 12px;
