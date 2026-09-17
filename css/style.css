@@ -186,6 +186,7 @@ img { max-width: 100%; }
   border: 1px solid var(--border-3);
 }
 .btn-outline:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-sm { padding: 9px 18px; font-size: 12px; }
 .btn-dark { background: var(--ink); color: var(--text); }
 .btn-dark:hover { background: #222; color: var(--yellow); }
 .btn-on-yellow { background: var(--ink); color: var(--yellow); }
@@ -901,9 +902,35 @@ img { max-width: 100%; }
 }
 .builder-preview-panel .door-svg,
 .builder-preview-panel .door-canvas { width: 100%; height: auto; max-height: 560px; display: block; }
+.builder-preview-panel .door-svg[hidden],
+.builder-preview-panel .door-canvas[hidden] { display: none; }
 .builder-preview-panel { overflow: hidden; }
 .door3d-mount { width: 100%; height: 560px; }
 .door3d-mount canvas { width: 100%; height: 100%; display: block; }
+
+/* Shown while the 3D preview loads, and if it fails to load at all (CDN
+   blocked, slow/flaky connection, WebGL unavailable) — see showDoor3D() in
+   builder.js. The 2D canvas fallback (.door-canvas / #door2d-mount) keeps the
+   tool usable end to end even when 3D never loads. */
+.builder-3d-status {
+  position: absolute; top: 12px; left: 12px; right: 12px; z-index: 2;
+  font-family: var(--font-mono); font-size: 12px; text-align: center;
+}
+.builder-3d-status-loading, .builder-3d-status-error { display: none; }
+.builder-3d-status[data-status="loading"] .builder-3d-status-loading {
+  display: inline-block; background: rgba(11,11,11,0.85); color: #fff;
+  padding: 8px 16px; border-radius: 3px;
+}
+.builder-3d-status[data-status="error"] .builder-3d-status-error {
+  display: flex; flex-direction: column; gap: 10px; align-items: center;
+  background: #fff; border: 1px solid #D8D5CC; color: var(--ink);
+  padding: 14px 16px; text-transform: none; letter-spacing: normal; font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+/* .btn-outline's default colors (var(--text)/var(--border-3)) assume a dark
+   page background — this banner sits on white, so it needs its own contrast. */
+.builder-3d-status-error .btn-outline { color: var(--ink); border-color: #B8B4A8; }
+.builder-3d-status-error .btn-outline:hover { border-color: var(--ink); color: var(--ink); background: #F5F3EE; }
 .schematic-mount { width: 100%; display: flex; align-items: center; justify-content: center; }
 .schematic-mount[hidden] { display: none; }
 

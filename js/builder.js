@@ -1,5 +1,5 @@
 // Door Builder — Insulated Panel.
-// Vanilla JS, no build step, matches conventions in js/auth.js (fetch pattern, .auth-error, etc.)
+// Vanilla JS, no build step.
 
 (function () {
   'use strict';
@@ -283,6 +283,12 @@
   // already picked doesn't re-pay the load/init cost.
   let door3d = null;
   let door3dLoadPromise = null;
+  // Set once the 3D preview has failed to load (CDN blocked, network timeout,
+  // WebGL unavailable, etc.) so every later renderPreview() call goes straight
+  // to the 2D fallback instead of retrying the import on its own — the visitor
+  // has to press "Retry 3D preview" to try again.
+  let door3dFailed = false;
+  const DOOR3D_LOAD_TIMEOUT_MS = 9000;
 
   function door3dPayload() {
     const style = findStyle(state.style);
@@ -316,6 +322,62 @@
     return mount;
   }
 
+  // Dependency-free 2D fallback — draws the same cols x 4-row grid the 3D scene
+  // uses, flat-colored per the current selection, with a lighter band standing
+  // in for the window row. No CDN, no WebGL: this always works, so the tool
+  // stays usable end to end even when the 3D preview can't load.
+  const FALLBACK_ROWS = 4;
+  function render2D(canvas, payload) {
+    const cssW = canvas.clientWidth || 560;
+    const cssH = Math.round(cssW * 0.72);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.height = cssH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    const pad = cssW * 0.06;
+    const doorW = cssW - pad * 2, doorH = cssH - pad * 2;
+    const doorX = pad, doorY = pad;
+    ctx.fillStyle = '#cfcbc0';
+    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.fillStyle = '#e9e6df';
+    ctx.fillRect(doorX - 8, doorY - 8, doorW + 16, doorH + 16);
+
+    const cols = Math.max(1, payload.cols || 4);
+    const gap = doorW * 0.012;
+    const cellW = (doorW - gap * (cols - 1)) / cols;
+    const cellH = (doorH - gap * (FALLBACK_ROWS - 1)) / FALLBACK_ROWS;
+    const windowRowIdx = payload.windowRow === 'center' ? 1 : 0;
+
+    for (let r = 0; r < FALLBACK_ROWS; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = doorX + c * (cellW + gap);
+        const y = doorY + r * (cellH + gap);
+        const isWindowCell = payload.hasWindow && r === windowRowIdx;
+        ctx.fillStyle = isWindowCell ? '#6b7280' : payload.colorHex;
+        ctx.fillRect(x, y, cellW, cellH);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+      }
+    }
+  }
+
+  function showFallback2D(mount) {
+    mount.hidden = false;
+    render2D(mount, door3dPayload());
+  }
+
+  function setDoor3DStatus(status) {
+    const statusMount = document.getElementById('door3d-status');
+    if (!statusMount) return;
+    statusMount.hidden = status === 'none';
+    statusMount.dataset.status = status;
+  }
+
   function showDoor3D(mount) {
     if (door3d) {
       door3d.resume();
@@ -323,12 +385,44 @@
       door3d.update(door3dPayload());
       return;
     }
+    if (door3dFailed) return; // stays on the 2D fallback until Retry is pressed
     if (!door3dLoadPromise) {
-      door3dLoadPromise = import('./builder-3d.js').then((mod) => {
-        door3d = mod.createDoorScene(mount);
-        door3d.update(door3dPayload());
+      setDoor3DStatus('loading');
+      const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('3D preview timed out loading')), DOOR3D_LOAD_TIMEOUT_MS);
       });
+      // Promise.race settles on whichever finishes first; if the timeout wins,
+      // a late-arriving import() success is simply never chained into anything
+      // and is ignored — no risk of it fighting the fallback afterwards.
+      door3dLoadPromise = Promise.race([import('./builder-3d.js'), timeout])
+        .then((mod) => {
+          door3d = mod.createDoorScene(mount);
+          door3d.update(door3dPayload());
+          setDoor3DStatus('none');
+          const door2dMount = document.getElementById('door2d-mount');
+          if (door2dMount) door2dMount.hidden = true;
+          mount.hidden = false;
+        })
+        .catch((err) => {
+          console.error('[builder] 3D preview failed to load, showing 2D fallback:', err);
+          door3dFailed = true;
+          door3dLoadPromise = null;
+          setDoor3DStatus('error');
+          mount.hidden = true;
+          const door2dMount = document.getElementById('door2d-mount');
+          if (door2dMount) showFallback2D(door2dMount);
+        });
     }
+  }
+
+  // A browser that has already failed a dynamic import() for a given module URL
+  // caches that failure for the page's lifetime — calling import() again on the
+  // exact same URL rejects immediately every time, even once the network/CDN
+  // issue that caused it is gone. The only reliable way to actually retry is a
+  // full reload, which gets a clean module registry. Progress isn't lost: the
+  // wizard's state is saved to localStorage (STORAGE_KEY) and restored on load.
+  function retryDoor3D() {
+    window.location.reload();
   }
 
   function renderPreview() {
@@ -338,8 +432,40 @@
     // door3dPayload() defaults (cassette style, a neutral grey) for whatever
     // hasn't been picked yet, and updates in place as the visitor makes choices.
     const door3dMount = getMount(el, 'door3d-mount', 'door3d-mount');
-    door3dMount.hidden = false;
-    showDoor3D(door3dMount);
+    // Not built with getMount() since that helper always creates a <div> —
+    // this permanent mount needs to be a <canvas> from the start.
+    let canvasMount = document.getElementById('door2d-mount');
+    if (!canvasMount) {
+      canvasMount = document.createElement('canvas');
+      canvasMount.id = 'door2d-mount';
+      canvasMount.className = 'door-canvas';
+      canvasMount.hidden = true;
+      el.appendChild(canvasMount);
+    }
+    let statusMount = document.getElementById('door3d-status');
+    if (!statusMount) {
+      statusMount = document.createElement('div');
+      statusMount.id = 'door3d-status';
+      statusMount.className = 'builder-3d-status';
+      statusMount.hidden = true;
+      statusMount.innerHTML =
+        '<div class="builder-3d-status-loading">Loading 3D preview…</div>' +
+        '<div class="builder-3d-status-error">' +
+        '3D preview couldn\'t load, so we\'re showing a simplified view below.' +
+        '<button type="button" class="btn btn-outline btn-sm" data-retry-3d>Retry 3D preview</button>' +
+        '</div>';
+      statusMount.querySelector('[data-retry-3d]').addEventListener('click', retryDoor3D);
+      el.appendChild(statusMount);
+    }
+
+    if (door3dFailed) {
+      door3dMount.hidden = true;
+      showFallback2D(canvasMount);
+    } else {
+      door3dMount.hidden = false;
+      showDoor3D(door3dMount);
+      if (door3d) canvasMount.hidden = true;
+    }
 
     const chips = document.getElementById('builder-summary-chips');
     if (!chips) return;
