@@ -135,6 +135,10 @@
             <h2 class="spec-title" style="font-size:26px;">Your details</h2>
           </div>
           <form id="builder-quote-form" class="form builder-quote-form" novalidate>
+            <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+              <label for="q-website">Leave this field blank</label>
+              <input id="q-website" type="text" tabindex="-1" autocomplete="off">
+            </div>
             <div id="quote-submit-error" class="auth-error"></div>
             <div class="form-row">
               <div>
@@ -189,6 +193,7 @@
                 <span class="field-error" id="fe-q-postal"></span>
               </div>
             </div>
+            <p style="font-size:12px;color:var(--text-muted);margin:4px 0 0;">We only use this information to respond to your quote request. See our <a href="/privacy" style="color:inherit;">Privacy Policy</a>.</p>
             <div class="builder-step-nav">
               <button type="button" class="btn btn-outline" data-back>← BACK</button>
               <button type="submit" class="btn btn-primary btn-notch" id="quote-submit-btn">SUBMIT REQUEST</button>

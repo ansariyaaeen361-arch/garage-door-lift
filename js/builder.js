@@ -750,7 +750,8 @@
       city: document.getElementById('q-city').value,
       state: document.getElementById('q-state').value,
       country: document.getElementById('q-country').value,
-      postalCode: document.getElementById('q-postal').value
+      postalCode: document.getElementById('q-postal').value,
+      website: document.getElementById('q-website') ? document.getElementById('q-website').value : ''
     };
 
     const errors = validateQuoteForm(data);

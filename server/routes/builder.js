@@ -92,6 +92,13 @@ router.post('/quote', async (req, res) => {
     return res.status(400).json({ error: 'Missing contact information.' });
   }
 
+  // Honeypot: a hidden field real visitors never see or fill in, but bots that
+  // blindly fill every form field do. Pretend success without actually saving
+  // anything, so the bot doesn't learn to look for a different signal.
+  if (contact.website) {
+    return res.status(201).json({ id: 0, publicId: 'na', pdfUrl: '#' });
+  }
+
   const name = contact.name && String(contact.name).trim();
   const phone = contact.phone && String(contact.phone).trim();
   const email = contact.email ? String(contact.email).trim() : '';

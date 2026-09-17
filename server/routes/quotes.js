@@ -4,7 +4,12 @@ const db = require('../db');
 const router = express.Router();
 
 router.post('/', (req, res) => {
-  const { name, phone, email, product, city, message } = req.body || {};
+  const { name, phone, email, product, city, message, website } = req.body || {};
+
+  // Honeypot: a hidden field real visitors never see or fill in, but bots that
+  // blindly fill every form field do. Pretend success without actually saving
+  // anything, so the bot doesn't learn to look for a different signal.
+  if (website) return res.status(201).json({ id: 0 });
 
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'Full name is required.' });
   if (!phone || !String(phone).trim()) return res.status(400).json({ error: 'Phone is required.' });

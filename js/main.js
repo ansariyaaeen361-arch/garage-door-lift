@@ -38,8 +38,6 @@
   });
 
   // Contact form: client-side validation, then posts to the quotes API.
-  // If a user is signed in, the backend links the request to their account
-  // automatically (via the session cookie) so it shows up on their account page.
   var form = document.getElementById('quote-form');
   if (form) {
     form.addEventListener('submit', function (e) {
@@ -53,13 +51,15 @@
       if (errorBox) errorBox.classList.remove('show');
       submitBtn.disabled = true;
 
+      var honeypot = document.getElementById('q-website');
       var payload = {
         name: document.getElementById('q-name').value.trim(),
         phone: document.getElementById('q-phone').value.trim(),
         email: document.getElementById('q-email').value.trim(),
         product: document.getElementById('quote-product').value,
         city: document.getElementById('q-city').value.trim(),
-        message: document.getElementById('q-message').value.trim()
+        message: document.getElementById('q-message').value.trim(),
+        website: honeypot ? honeypot.value : ''
       };
 
       fetch('/api/quotes', {
@@ -95,6 +95,25 @@
       });
     }
   }
+
+  // Back-to-top button: injected once per page (rather than hand-added to every
+  // HTML file), shown once the visitor has scrolled a full viewport down.
+  (function setupBackToTop() {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'back-to-top';
+    btn.setAttribute('aria-label', 'Back to top');
+    btn.innerHTML = '&uarr;';
+    btn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.body.appendChild(btn);
+    var toggleVisible = function () {
+      btn.classList.toggle('is-visible', window.scrollY > window.innerHeight);
+    };
+    toggleVisible();
+    window.addEventListener('scroll', toggleVisible, { passive: true });
+  })();
 
   // Header gets a drop shadow once the page has scrolled past the top.
   var header = document.querySelector('.site-header');

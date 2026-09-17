@@ -57,6 +57,10 @@
 
       <div id="quote-error" class="auth-error"></div>
       <form id="quote-form" class="form">
+        <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+          <label for="q-website">Leave this field blank</label>
+          <input id="q-website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
         <div class="form-row">
           <div>
             <label for="q-name">FULL NAME *</label>
@@ -93,6 +97,7 @@
           <label for="q-message">PROJECT DETAILS</label>
           <textarea id="q-message" name="message" rows="5"></textarea>
         </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:-6px 0 0;">We only use this information to respond to your quote request. See our <a href="/privacy" class="footer-link" style="display:inline;">Privacy Policy</a>.</p>
         <button type="submit" class="btn btn-primary" style="width:100%;padding:19px;font-size:15.5px;">SUBMIT REQUEST</button>
       </form>
     </div>
@@ -140,7 +145,7 @@
     </div>
     <div class="footer-bottom">
       <span>© 2026 GARAGE DOOR LIFT — ALL RIGHTS RESERVED</span>
-      <span>PRODUCT CATALOG SITE · NO ONLINE CHECKOUT</span>
+      <span><a href="/privacy" class="footer-link" style="display:inline;">Privacy Policy</a> · PRODUCT CATALOG SITE · NO ONLINE CHECKOUT</span>
     </div>
   </div>
 </footer>
