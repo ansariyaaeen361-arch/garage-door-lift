@@ -2,7 +2,7 @@
   "name": "garage-door-lift-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Backend for Garage Door Lift: account signup/login and quote-request tracking.",
+  "description": "Backend for Garage Door Lift: quote-request submission and Door Builder PDF generation.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -11,10 +11,7 @@
     "node": ">=22.5.0"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.6",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
     "pdfkit": "^0.19.1"
   }
 }

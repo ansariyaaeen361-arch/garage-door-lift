@@ -140,11 +140,6 @@ img { max-width: 100%; }
 .nav-link:hover { color: var(--yellow); background: rgba(254,196,0,0.08); }
 .nav-link.active { color: var(--yellow); border-bottom-color: var(--yellow); background: rgba(254,196,0,0.06); }
 
-/* Auth-state nav links: JS toggles body.is-authed once /api/auth/me responds. */
-.auth-user-only { display: none; }
-body.is-authed .auth-guest-only { display: none; }
-body.is-authed .auth-user-only { display: inline-block; }
-
 .nav-toggle {
   display: none;
   background: none;

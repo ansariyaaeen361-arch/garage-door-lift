@@ -4,7 +4,6 @@ const crypto = require('node:crypto');
 const express = require('express');
 const PDFDocument = require('pdfkit');
 const db = require('../db');
-const { attachUserIfPresent } = require('../auth-utils');
 const { sendQuoteEmail } = require('../mailer');
 
 const router = express.Router();
@@ -82,7 +81,7 @@ function generatePdf({ filePath, publicId, config, contact }) {
   });
 }
 
-router.post('/quote', attachUserIfPresent, async (req, res) => {
+router.post('/quote', async (req, res) => {
   const body = req.body || {};
   const { config, contact } = body;
 
@@ -132,13 +131,12 @@ router.post('/quote', attachUserIfPresent, async (req, res) => {
 
   let info;
   try {
-    const userId = req.user ? req.user.sub : null;
     info = db.prepare(`
       INSERT INTO builder_quotes
-        (public_id, user_id, config_json, quantity, name, phone, email, address, city, state, country, postal_code, pdf_path)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (public_id, config_json, quantity, name, phone, email, address, city, state, country, postal_code, pdf_path)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      publicId, userId, JSON.stringify(config), cleanContact.quantity, cleanContact.name, cleanContact.phone,
+      publicId, JSON.stringify(config), cleanContact.quantity, cleanContact.name, cleanContact.phone,
       cleanContact.email || null, cleanContact.address || null, cleanContact.city || null,
       cleanContact.state || null, cleanContact.country || null, cleanContact.postalCode || null, pdfPath
     );

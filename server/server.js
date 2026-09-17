@@ -1,8 +1,6 @@
 const path = require('node:path');
 const express = require('express');
-const cookieParser = require('cookie-parser');
 
-const authRoutes = require('./routes/auth');
 const quoteRoutes = require('./routes/quotes');
 const builderRoutes = require('./routes/builder');
 
@@ -11,9 +9,7 @@ const PORT = process.env.PORT || 3000;
 const SITE_ROOT = path.join(__dirname, '..');
 
 app.use(express.json());
-app.use(cookieParser());
 
-app.use('/api/auth', authRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/builder', builderRoutes);
 
