@@ -24,7 +24,7 @@
     traditional: [
       { id: 'black', name: 'Black', hex: '#1a1a1a', code: 'RAL 9005' },
       { id: 'white', name: 'White', hex: '#f2f2ee', code: 'RAL 9016' },
-      { id: 'almond', name: 'Almond', hex: '#cfc9b8', code: 'RAL 9005' }
+      { id: 'almond', name: 'Almond', hex: '#cfc9b8', code: 'RAL 1015' }
     ],
     // img (where present) is a real photographed wood-grain/finish swatch — shown
     // instead of the flat hex approximation, since a flat color can't represent a
@@ -40,14 +40,14 @@
       { id: 'white', name: 'White', hex: '#eceae4', code: 'SOLID', img: 'assets/wood-white.png' }
     ],
     overlay: [
-      { id: 'chocolate-brown', name: 'Chocolate Brown', hex: '#3a2a20', code: 'RAL 8077' },
+      { id: 'chocolate-brown', name: 'Chocolate Brown', hex: '#3a2a20', code: 'RAL 8017' },
       { id: 'basic-grey', name: 'Basic Grey', hex: '#54585c', code: 'RAL 7014' },
       { id: 'white', name: 'White', hex: '#eceae4', code: 'RAL 9016' },
-      { id: 'brown-suede', name: 'Brown Suede', hex: '#4a3226', code: 'RAL 8077' },
-      { id: 'matte-black', name: 'Matte Black', hex: '#141414', code: 'RAL 8077' },
+      { id: 'brown-suede', name: 'Brown Suede', hex: '#4a3226', code: 'RAL 8011' },
+      { id: 'matte-black', name: 'Matte Black', hex: '#141414', code: 'RAL 9005' },
       { id: 'light-oak', name: 'Light Oak', hex: '#b8875a', code: 'PL-OK01', img: 'assets/wood-light-oak.png' },
       { id: 'dark-oak', name: 'Dark Oak', hex: '#5a3a24', code: 'PL-OK02', img: 'assets/wood-dark-oak.png' },
-      { id: 'white-suede', name: 'White Suede', hex: '#dcd8ce', code: 'RAL 8014' },
+      { id: 'white-suede', name: 'White Suede', hex: '#dcd8ce', code: 'RAL 9002' },
       { id: 'black-walnut', name: 'Black Walnut', hex: '#4a3628', code: 'PL-WT02', img: 'assets/wood-black-walnut.png' }
     ],
     glass: [
