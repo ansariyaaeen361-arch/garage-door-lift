@@ -218,12 +218,18 @@
 <script src="js/main.js"></script>
 <!-- Live 3D preview — Three.js, free/open-source, loaded via dynamic import() in
      js/builder.js as soon as the builder page loads. The import map just tells
-     that dynamic import where to resolve "three" from. -->
+     that dynamic import where to resolve "three" from.
+     Self-hosted (vendor/three/) rather than pulled from a CDN — a corporate
+     firewall, ad-blocker, or privacy extension blocking a generic CDN domain
+     was the actual root cause behind the "3D preview couldn't load" fallback
+     some visitors hit (the 2D fallback added for that still stays as a safety
+     net either way, but serving these two files from our own domain removes
+     the most common real-world cause of it triggering at all). -->
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    "three": "/vendor/three/three.module.js",
+    "three/addons/controls/OrbitControls.js": "/vendor/three/OrbitControls.js"
   }
 }
 </script>
