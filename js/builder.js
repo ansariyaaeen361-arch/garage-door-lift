@@ -477,7 +477,6 @@
     if (!chips) return;
     const line = currentLine();
     const items = [
-      line ? line.name : null,
       state.size ? sizeLabel(state) : null,
       state.model && lineHasModel(line) ? findModel(state.model).name : null,
       state.style && lineHasStyle(line) ? findStyle(state.style).name : null,
@@ -621,7 +620,6 @@
     const style = findStyle(state.style);
     const color = findColor(state.color);
     const rows = [
-      ['Category', line ? line.name : '—'],
       ['Size', sizeLabel(state)]
     ];
     if (lineHasModel(line)) rows.push(['Product Line', model ? `${model.name}${model.sub ? ` — ${model.sub}` : ''}` : '—']);
