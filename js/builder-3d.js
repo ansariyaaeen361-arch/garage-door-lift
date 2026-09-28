@@ -262,6 +262,34 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
         }, barW * 0.85);
       }
     });
+  } else if (styleId === 'flush') {
+    // Modern Flush: no raised cells at all — restore the true color everywhere
+    // (undoing the recess tint the whole canvas starts with) and bake in only
+    // faint seam lines at the row boundaries, since a real flush door still
+    // shows a hairline where sections meet even though the face is smooth.
+    segs.forEach(([bodyTop, bodyBottom]) => {
+      ctx.fillStyle = colorHex;
+      ctx.fillRect(pad, bodyTop, totalW, bodyBottom - bodyTop);
+    });
+    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = 1.5;
+    for (let r = 1; r < ROWS; r++) {
+      if (hasWindow && (r === winRowIdx || r - 1 === winRowIdx)) continue;
+      const y = rowY(r) - gapY / 2;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + totalW, y); ctx.stroke();
+    }
+  } else if (styleId === 'vertical-batten') {
+    // Aluminum Grille: many thin vertical battens spanning each body segment,
+    // continuous top to bottom rather than boxed into the row/column grid the
+    // panel styles use.
+    const n = Math.max(10, cols * 3);
+    const battenW = Math.max(6, (totalW / n) * 0.55);
+    segs.forEach(([bodyTop, bodyBottom]) => {
+      for (let i = 0; i < n; i++) {
+        const x = pad + (totalW / n) * (i + 0.5);
+        strokeRaisedBar(() => { ctx.beginPath(); ctx.moveTo(x, bodyTop + 4); ctx.lineTo(x, bodyBottom - 4); }, battenW);
+      }
+    });
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -538,6 +566,20 @@ export function createDoorScene(container) {
       handle.position.set(doorW / 2 - doorW / cols * 0.3, doorH * 0.42, baseFrontZ + RAISE + 0.025);
       handle.castShadow = true;
       doorMeshGroup.add(handle);
+    } else if (style === 'vertical-batten') {
+      const n = Math.max(10, cols * 3);
+      const battenWpx = Math.max(6, ((baked.texW - baked.pad * 2) / n) * 0.55);
+      baked.bodySegments.forEach(([bodyTopPx, bodyBottomPx]) => {
+        for (let i = 0; i < n; i++) {
+          const xPx = baked.pad + ((baked.texW - baked.pad * 2) / n) * (i + 0.5) - battenWpx / 2;
+          const w = baked.toWorld(0, 0, battenWpx, bodyBottomPx - bodyTopPx - 8);
+          const pos = baked.toWorld(xPx, bodyTopPx + 4, battenWpx, bodyBottomPx - bodyTopPx - 8);
+          const batten = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
+          batten.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
+          batten.castShadow = true; batten.receiveShadow = true;
+          doorMeshGroup.add(batten);
+        }
+      });
     }
 
     if (hasWindow) {

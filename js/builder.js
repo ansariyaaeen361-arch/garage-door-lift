@@ -84,11 +84,22 @@
     cassette: { id: 'cassette', name: 'Classic Cassette', pattern: 'cassette', img: 'assets/style-icon-cassette.png' },
     'carriage-short': { id: 'carriage-short', name: 'Carriage Short', pattern: 'carriage-short', img: 'assets/style-icon-carriage-short.png' },
     'raised-ranch': { id: 'raised-ranch', name: 'Raised Ranch', pattern: 'raised-ranch', img: 'assets/style-icon-raised-ranch.png' },
-    'carriage-long': { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' }
+    'carriage-long': { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' },
+    flush: { id: 'flush', name: 'Flush', pattern: 'flush', img: 'assets/style-icon-flush.png' },
+    'vertical-batten': { id: 'vertical-batten', name: 'Vertical Batten', pattern: 'vertical-batten', img: 'assets/aluminum-grille-door.png' }
   };
   const STYLES_BY_MODEL = {
     traditional: [STYLE_ENTRIES.cassette, STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['raised-ranch'], STYLE_ENTRIES['carriage-long']],
-    'non-insulated': [STYLE_ENTRIES.cassette, STYLE_ENTRIES['raised-ranch']]
+    'non-insulated': [STYLE_ENTRIES.cassette, STYLE_ENTRIES['raised-ranch']],
+    // Overlay's real 6400/6500/6600 series are dozens of individual numbered
+    // panel-groove patterns (see product-overlay.html) that this canvas-baked
+    // texture system can't reproduce one-for-one — reusing the same 4 named
+    // patterns as Traditional gives an honest carriage-house-style preview
+    // (matching Overlay's own "carriage detailing" description) without
+    // claiming to render a specific 6410/6412/etc. pattern.
+    overlay: [STYLE_ENTRIES.cassette, STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['raised-ranch'], STYLE_ENTRIES['carriage-long']],
+    'modern-flush': [STYLE_ENTRIES.flush],
+    'aluminum-grille': [STYLE_ENTRIES['vertical-batten']]
   };
   function currentStyles() { return STYLES_BY_MODEL[state.model] || []; }
 
@@ -105,13 +116,19 @@
       // an Insulated Panel door underneath regardless of which was picked — so a
       // visitor choosing Glass, Overlay, Aluminum Grille or Modern Flush got a
       // preview and quote PDF that misrepresented that product (client-reported
-      // issue). Only Traditional and Non-Insulated actually share this door's
-      // real construction and style patterns (raised-panel steel, same 4
-      // Cassette/Carriage-Short/Raised-Ranch/Carriage-Long styles), so the
-      // Builder is now limited to those two. The other 4 lines' own product
-      // pages link to Contact (pre-filled with that line) instead of here.
+      // issue). Fixed by giving each line its own real style pattern in
+      // bakeDoorTexture()/update() (js/builder-3d.js: 'flush' for Modern Flush,
+      // 'vertical-batten' for Aluminum Grille, the same 4 carriage patterns for
+      // Overlay) instead of always baking the Traditional panel-grid look.
+      // Glass is still excluded — a full-view glass door isn't a variation on
+      // this panel-grid geometry at all, it needs a genuinely different 3D
+      // construction that doesn't exist yet; its product page links to Contact
+      // instead of here until that's built.
       models: [
         { id: 'traditional', name: 'Traditional Insulated Panel Doors', img: 'assets/traditional-door.png' },
+        { id: 'modern-flush', name: 'Modern Flush Doors', img: 'assets/modern-flush-door.png' },
+        { id: 'overlay', name: 'Overlay Doors', img: 'assets/overlay-door.png' },
+        { id: 'aluminum-grille', name: 'Aluminum Grille Doors', img: 'assets/aluminum-grille-door.png' },
         { id: 'non-insulated', name: 'Non-Insulated Panel Doors', img: 'assets/non-insulated-garage-door.png' }
       ],
       // layout 'unit' = one self-contained window icon, tiled per column (contain-fit).
@@ -301,9 +318,14 @@
     const color = findColor(state.color);
     const hasWindow = !!(state.windows && state.windows !== 'none');
     const windowDef = hasWindow ? findWindow(state.windows) : null;
+    // A model with exactly one style (Modern Flush, Aluminum Grille) never
+    // shows the Panel Design step at all (see skippableStep()), so state.style
+    // is never explicitly set — fall back to that model's own single style
+    // pattern instead of always defaulting to 'cassette'.
+    const onlyStyle = currentStyles().length === 1 ? currentStyles()[0] : null;
     return {
       cols: getCols(),
-      style: style ? style.pattern : 'cassette',
+      style: style ? style.pattern : (onlyStyle ? onlyStyle.pattern : 'cassette'),
       colorHex: color ? color.hex : '#8a8a86',
       hasWindow,
       windowImg: windowDef ? windowDef.img : null,
