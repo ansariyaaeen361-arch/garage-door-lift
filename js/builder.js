@@ -100,17 +100,18 @@
     panel: {
       id: 'panel', name: 'Insulated Panel', heroImg: 'assets/style-icon-cassette.png',
       blurb: 'Classic panel doors, 4 styles', secondaryLabel: 'Windows',
-      // The Model step shows the 6 marketing product lines (same photos as
-      // products.html), not literal Insulated Panel models — it's informational
-      // ("which door look are you after"). The 3D/PDF/review pipeline below this
-      // step still only ever configures an Insulated Panel door regardless of
-      // which is picked here.
+      // The Model step originally showed all 6 marketing product lines as
+      // informational cards, but the 3D preview/review/PDF only ever configured
+      // an Insulated Panel door underneath regardless of which was picked — so a
+      // visitor choosing Glass, Overlay, Aluminum Grille or Modern Flush got a
+      // preview and quote PDF that misrepresented that product (client-reported
+      // issue). Only Traditional and Non-Insulated actually share this door's
+      // real construction and style patterns (raised-panel steel, same 4
+      // Cassette/Carriage-Short/Raised-Ranch/Carriage-Long styles), so the
+      // Builder is now limited to those two. The other 4 lines' own product
+      // pages link to Contact (pre-filled with that line) instead of here.
       models: [
         { id: 'traditional', name: 'Traditional Insulated Panel Doors', img: 'assets/traditional-door.png' },
-        { id: 'modern-flush', name: 'Modern Flush Doors', img: 'assets/modern-flush-door.png' },
-        { id: 'overlay', name: 'Overlay Doors', img: 'assets/overlay-door.png' },
-        { id: 'glass', name: 'Glass Garage Doors', img: 'assets/glass-garage-door.png' },
-        { id: 'aluminum-grille', name: 'Aluminum Grille Doors', img: 'assets/aluminum-grille-door.png' },
         { id: 'non-insulated', name: 'Non-Insulated Panel Doors', img: 'assets/non-insulated-garage-door.png' }
       ],
       // layout 'unit' = one self-contained window icon, tiled per column (contain-fit).

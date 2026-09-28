@@ -5,6 +5,7 @@ server/node_modules/
 server/data/app.db
 server/data/app.db-journal
 server/data/jwt-secret.txt
+server/data/admin-key.txt
 server/data/builder-pdfs/
 
 # logs / OS junk

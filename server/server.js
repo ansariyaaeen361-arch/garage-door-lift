@@ -3,6 +3,7 @@ const express = require('express');
 
 const quoteRoutes = require('./routes/quotes');
 const builderRoutes = require('./routes/builder');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/builder', builderRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Canonicalize: /page.html -> /page (redirect), so links/bookmarks settle on the clean URL.
 app.use((req, res, next) => {
