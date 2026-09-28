@@ -91,13 +91,14 @@
   const STYLES_BY_MODEL = {
     traditional: [STYLE_ENTRIES.cassette, STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['raised-ranch'], STYLE_ENTRIES['carriage-long']],
     'non-insulated': [STYLE_ENTRIES.cassette, STYLE_ENTRIES['raised-ranch']],
-    // Overlay's real 6400/6500/6600 series are dozens of individual numbered
-    // panel-groove patterns (see product-overlay.html) that this canvas-baked
-    // texture system can't reproduce one-for-one — reusing the same 4 named
-    // patterns as Traditional gives an honest carriage-house-style preview
-    // (matching Overlay's own "carriage detailing" description) without
-    // claiming to render a specific 6410/6412/etc. pattern.
-    overlay: [STYLE_ENTRIES.cassette, STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['raised-ranch'], STYLE_ENTRIES['carriage-long']],
+    // Overlay's real 6400/6500/6600 series (see the actual 6410/6412/6414
+    // reference photos) are all X/V-brace carriage-door patterns — none of
+    // them are the plain raised-box Cassette look or the horizontal-band
+    // Raised Ranch look, so only the 2 carriage/brace patterns are offered
+    // here (not all 4, unlike Traditional) — this is both a closer match to
+    // the real catalog and keeps Overlay from rendering identically to
+    // Traditional when the same style happens to get picked on both.
+    overlay: [STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['carriage-long']],
     'modern-flush': [STYLE_ENTRIES.flush],
     'aluminum-grille': [STYLE_ENTRIES['vertical-batten']]
   };
