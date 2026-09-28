@@ -290,6 +290,41 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
         strokeRaisedBar(() => { ctx.beginPath(); ctx.moveTo(x, bodyTop + 4); ctx.lineTo(x, bodyBottom - 4); }, battenW);
       }
     });
+  } else if (styleId === 'glass') {
+    // Full-View Glass: every cell in the grid is an actual glass pane, not a
+    // painted panel — colorHex here is the FRAME color (per the glass palette's
+    // 'FRAME' code), so the cells always stay glass-blue regardless of which
+    // frame color is picked, and only the aluminum grid lines get tinted.
+    for (let r = 0; r < ROWS; r++) {
+      if (hasWindow && r === winRowIdx) continue;
+      for (let c = 0; c < cols; c++) {
+        const x = colX(c), y = rowY(r);
+        ctx.fillStyle = 'rgba(118,148,163,0.5)';
+        ctx.fillRect(x, y, cellW, cellH);
+        const grad = ctx.createLinearGradient(x, y, x + cellW, y + cellH);
+        grad.addColorStop(0, 'rgba(255,255,255,0.3)');
+        grad.addColorStop(0.5, 'rgba(255,255,255,0.02)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.12)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, cellW, cellH);
+      }
+    }
+    const barW = Math.max(14, totalW * 0.012);
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = colorHex;
+    ctx.lineWidth = barW;
+    for (let c = 1; c < cols; c++) {
+      const x = colX(c) - gapX / 2;
+      ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, pad + totalH); ctx.stroke();
+    }
+    for (let r = 1; r < ROWS; r++) {
+      if (hasWindow && (r === winRowIdx || r - 1 === winRowIdx)) continue;
+      const y = rowY(r) - gapY / 2;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + totalW, y); ctx.stroke();
+    }
+    ctx.strokeStyle = colorHex;
+    ctx.lineWidth = barW * 1.3;
+    ctx.strokeRect(pad, pad, totalW, totalH);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -580,6 +615,49 @@ export function createDoorScene(container) {
           doorMeshGroup.add(batten);
         }
       });
+    } else if (style === 'glass') {
+      // Full-View Glass: real aluminum mullions (raised, tinted the selected
+      // frame color) plus an actual transparent glass pane per cell — the only
+      // style where the panel material itself is glass rather than the door's
+      // painted color, since that's what makes this line genuinely different
+      // from a painted panel door instead of just a different surface pattern.
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0xaebfc7, roughness: 0.05, metalness: 0, transmission: 0.75,
+        thickness: 0.02, ior: 1.45, clearcoat: 0.6, clearcoatRoughness: 0.1, transparent: true, opacity: 0.85
+      });
+      const cellInset = baked.cellW * 0.05;
+      for (let r = 0; r < ROWS; r++) {
+        if (hasWindow && r === winRowIdx) continue;
+        for (let c = 0; c < cols; c++) {
+          const x = baked.pad + c * (baked.cellW + baked.gapX) + cellInset;
+          const y = baked.pad + r * (baked.cellH + baked.gapY) + cellInset;
+          const w = baked.toWorld(0, 0, baked.cellW - cellInset * 2, baked.cellH - cellInset * 2);
+          const pos = baked.toWorld(x, y, baked.cellW - cellInset * 2, baked.cellH - cellInset * 2);
+          const pane = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, 0.015), glassMat);
+          pane.position.set(pos.cx, pos.cy, baseFrontZ + RAISE * 0.4);
+          doorMeshGroup.add(pane);
+        }
+      }
+      const barWpx = Math.max(14, (baked.texW - baked.pad * 2) * 0.012);
+      for (let c = 1; c < cols; c++) {
+        const xPx = baked.pad + c * (baked.cellW + baked.gapX) - baked.gapX / 2 - barWpx / 2;
+        const w = baked.toWorld(0, 0, barWpx, baked.texH - baked.pad * 2);
+        const pos = baked.toWorld(xPx, baked.pad, barWpx, baked.texH - baked.pad * 2);
+        const mullion = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
+        mullion.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
+        mullion.castShadow = true; mullion.receiveShadow = true;
+        doorMeshGroup.add(mullion);
+      }
+      for (let r = 1; r < ROWS; r++) {
+        if (hasWindow && (r === winRowIdx || r - 1 === winRowIdx)) continue;
+        const yPx = baked.pad + r * (baked.cellH + baked.gapY) - baked.gapY / 2 - barWpx / 2;
+        const w = baked.toWorld(0, 0, baked.texW - baked.pad * 2, barWpx);
+        const pos = baked.toWorld(baked.pad, yPx, baked.texW - baked.pad * 2, barWpx);
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(w.w, w.h, RAISE), flatMat);
+        rail.position.set(pos.cx, pos.cy, baseFrontZ + RAISE / 2);
+        rail.castShadow = true; rail.receiveShadow = true;
+        doorMeshGroup.add(rail);
+      }
     }
 
     if (hasWindow) {

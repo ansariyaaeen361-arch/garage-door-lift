@@ -86,7 +86,8 @@
     'raised-ranch': { id: 'raised-ranch', name: 'Raised Ranch', pattern: 'raised-ranch', img: 'assets/style-icon-raised-ranch.png' },
     'carriage-long': { id: 'carriage-long', name: 'Carriage Long', pattern: 'carriage-long', img: 'assets/style-icon-carriage-long.png' },
     flush: { id: 'flush', name: 'Flush', pattern: 'flush', img: 'assets/style-icon-flush.png' },
-    'vertical-batten': { id: 'vertical-batten', name: 'Vertical Batten', pattern: 'vertical-batten', img: 'assets/aluminum-grille-door.png' }
+    'vertical-batten': { id: 'vertical-batten', name: 'Vertical Batten', pattern: 'vertical-batten', img: 'assets/aluminum-grille-door.png' },
+    'full-view': { id: 'full-view', name: 'Full-View Glass', pattern: 'glass', img: 'assets/glass-garage-door.png' }
   };
   const STYLES_BY_MODEL = {
     traditional: [STYLE_ENTRIES.cassette, STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['raised-ranch'], STYLE_ENTRIES['carriage-long']],
@@ -100,7 +101,8 @@
     // Traditional when the same style happens to get picked on both.
     overlay: [STYLE_ENTRIES['carriage-short'], STYLE_ENTRIES['carriage-long']],
     'modern-flush': [STYLE_ENTRIES.flush],
-    'aluminum-grille': [STYLE_ENTRIES['vertical-batten']]
+    'aluminum-grille': [STYLE_ENTRIES['vertical-batten']],
+    glass: [STYLE_ENTRIES['full-view']]
   };
   function currentStyles() { return STYLES_BY_MODEL[state.model] || []; }
 
@@ -121,15 +123,15 @@
       // bakeDoorTexture()/update() (js/builder-3d.js: 'flush' for Modern Flush,
       // 'vertical-batten' for Aluminum Grille, the same 4 carriage patterns for
       // Overlay) instead of always baking the Traditional panel-grid look.
-      // Glass is still excluded — a full-view glass door isn't a variation on
-      // this panel-grid geometry at all, it needs a genuinely different 3D
-      // construction that doesn't exist yet; its product page links to Contact
-      // instead of here until that's built.
+      // Glass got its own real construction too: a full-view aluminum frame grid
+      // with every cell an actual glass pane (not a painted panel), rather than
+      // reusing the panel-grid look — see 'glass' in bakeDoorTexture()/update().
       models: [
         { id: 'traditional', name: 'Traditional Insulated Panel Doors', img: 'assets/traditional-door.png' },
         { id: 'modern-flush', name: 'Modern Flush Doors', img: 'assets/modern-flush-door.png' },
         { id: 'overlay', name: 'Overlay Doors', img: 'assets/overlay-door.png' },
         { id: 'aluminum-grille', name: 'Aluminum Grille Doors', img: 'assets/aluminum-grille-door.png' },
+        { id: 'glass', name: 'Glass Garage Doors', img: 'assets/glass-garage-door.png' },
         { id: 'non-insulated', name: 'Non-Insulated Panel Doors', img: 'assets/non-insulated-garage-door.png' }
       ],
       // layout 'unit' = one self-contained window icon, tiled per column (contain-fit).
