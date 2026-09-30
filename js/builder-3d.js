@@ -149,11 +149,33 @@ function darken(hex, amount) {
   return '#' + c.getHexString();
 }
 
+// Maps a Glass Garage Door "glass type" (clear/tinted/frosted/reflective/mirror)
+// to real MeshPhysicalMaterial params, so every glass pane on the door — the
+// cell panes baked in bakeDoorTexture() AND the real-glass meshes built in
+// update()'s 'glass' style branch — actually looks like that type of glass
+// instead of always rendering the one default blue-glass look.
+function glassMaterialParamsFor(finish, tintHex) {
+  const color = tintHex || '#aebfc7';
+  switch (finish) {
+    case 'mirror':
+      return { color, roughness: 0.08, metalness: 0.9, transmission: 0, thickness: 0, ior: 1.5, clearcoat: 1, clearcoatRoughness: 0.05, transparent: false, opacity: 1 };
+    case 'frosted':
+      return { color, roughness: 0.55, metalness: 0, transmission: 0.35, thickness: 0.05, ior: 1.45, clearcoat: 0.2, clearcoatRoughness: 0.4, transparent: true, opacity: 0.92 };
+    case 'reflective':
+      return { color, roughness: 0.1, metalness: 0.35, transmission: 0.1, thickness: 0.02, ior: 1.6, clearcoat: 0.9, clearcoatRoughness: 0.05, transparent: true, opacity: 0.97 };
+    case 'tinted':
+      return { color, roughness: 0.1, metalness: 0.05, transmission: 0.45, thickness: 0.03, ior: 1.5, clearcoat: 0.6, clearcoatRoughness: 0.1, transparent: true, opacity: 0.92 };
+    case 'clear':
+    default:
+      return { color, roughness: 0.05, metalness: 0, transmission: 0.75, thickness: 0.02, ior: 1.45, clearcoat: 0.6, clearcoatRoughness: 0.1, transparent: true, opacity: 0.85 };
+  }
+}
+
 // Bakes panel/groove/crossbuck lines directly into the color texture so the grid
 // reads as carved-in from ANY angle and ANY color — real-time shadow alone (the
 // first version of this prototype) went flat/invisible on light colors viewed
 // close to head-on, since there was nothing but shadow contrast to see.
-function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windowImg, windowLayout, winRowIdx = 0) {
+function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windowImg, windowLayout, winRowIdx = 0, glassTint = null) {
   const texW = 1536, texH = Math.round(texW * doorH / doorW);
   const canvas = document.createElement('canvas');
   canvas.width = texW; canvas.height = texH;
@@ -293,13 +315,15 @@ function bakeDoorTexture(styleId, colorHex, cols, hasWindow, doorW, doorH, windo
   } else if (styleId === 'glass') {
     // Full-View Glass: every cell in the grid is an actual glass pane, not a
     // painted panel — colorHex here is the FRAME color (per the glass palette's
-    // 'FRAME' code), so the cells always stay glass-blue regardless of which
-    // frame color is picked, and only the aluminum grid lines get tinted.
+    // 'FRAME' code). The pane fill itself uses glassTint (the picked glass TYPE
+    // — Clear/Bronze/Black/etc.) so every cell always matches the chosen glass
+    // type; only the aluminum grid lines get tinted with colorHex.
+    const [gr, gg, gb] = hexToSrgbBytes(glassTint || '#76949f');
     for (let r = 0; r < ROWS; r++) {
       if (hasWindow && r === winRowIdx) continue;
       for (let c = 0; c < cols; c++) {
         const x = colX(c), y = rowY(r);
-        ctx.fillStyle = 'rgba(118,148,163,0.5)';
+        ctx.fillStyle = `rgba(${gr},${gg},${gb},0.55)`;
         ctx.fillRect(x, y, cellW, cellH);
         const grad = ctx.createLinearGradient(x, y, x + cellW, y + cellH);
         grad.addColorStop(0, 'rgba(255,255,255,0.3)');
@@ -390,6 +414,48 @@ function addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols,
   doorMeshGroup.add(glass);
 }
 
+// Modern Flush "Side Glass" — a vertical strip of framed glass panes on the LEFT
+// or RIGHT edge of the door (never a full-width top row, unlike addWindowRow).
+// World-space coordinates (doorW/doorH), not baked-texture pixel space, since
+// this doesn't correspond to any cell/row the texture bake carves out — it's a
+// pure overlay on top of the full, uncut flush door body.
+function addSideGlassPanels(doorMeshGroup, doorW, doorH, sideGlass, colorHex) {
+  const { side, panels } = sideGlass;
+  const doubleDoorW = 8 * CELL_W + 7 * GAP;
+  const stripW = Math.min(doorW * 0.4, doubleDoorW * 0.16);
+  const marginX = doorW * 0.025;
+  const marginY = doorH * 0.04;
+  const stripX = side === 'right' ? (doorW / 2 - marginX - stripW / 2) : (-doorW / 2 + marginX + stripW / 2);
+
+  const gapY = doorH * 0.02;
+  const totalStripH = doorH - marginY * 2;
+  const slotH = (totalStripH - gapY * (panels - 1)) / panels;
+  const paneH = slotH * 0.65;
+
+  const frameMat = new THREE.MeshPhysicalMaterial({
+    color: colorHex || 0xe7e4da, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
+  });
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xb4d6eb, roughness: 0.08, metalness: 0, transmission: 0.7,
+    thickness: 0.02, ior: 1.45, clearcoat: 0.5, clearcoatRoughness: 0.1, transparent: true, opacity: 0.85
+  });
+
+  for (let i = 0; i < panels; i++) {
+    const slotTop = (doorH - marginY) - i * (slotH + gapY);
+    const yCenter = slotTop - slotH / 2;
+
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(stripW, paneH, RAISE * 0.9), frameMat);
+    frame.position.set(stripX, yCenter, baseFrontZ + RAISE * 0.45);
+    frame.castShadow = true; frame.receiveShadow = true;
+    doorMeshGroup.add(frame);
+
+    const inset = stripW * 0.08;
+    const glass = new THREE.Mesh(new THREE.BoxGeometry(stripW - inset * 2, paneH - inset * 2, 0.015), glassMat);
+    glass.position.set(stripX, yCenter, baseFrontZ + RAISE * 0.9 + 0.01);
+    doorMeshGroup.add(glass);
+  }
+}
+
 export function createDoorScene(container) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xcfcbc0);
@@ -477,7 +543,7 @@ export function createDoorScene(container) {
 
   let lastRequestedWindowImg = null;
 
-  function update({ cols, style, colorHex, hasWindow, windowImg, windowLayout, windowRow }) {
+  function update({ cols, style, colorHex, hasWindow, windowImg, windowLayout, windowRow, glassTint, glassFinish, sideGlass }) {
     cols = Math.max(3, Math.min(12, cols || 4));
     const doorW = cols * CELL_W + (cols - 1) * GAP;
     const doorH = ROWS * CELL_H + (ROWS - 1) * GAP;
@@ -493,7 +559,7 @@ export function createDoorScene(container) {
     if (hasWindow && windowImg && !getLoadedImg(windowImg)) {
       preloadImage(windowImg).then(() => {
         if (lastRequestedWindowImg === windowImg) {
-          update({ cols, style, colorHex, hasWindow, windowImg, windowLayout, windowRow });
+          update({ cols, style, colorHex, hasWindow, windowImg, windowLayout, windowRow, glassTint, glassFinish, sideGlass });
         }
       });
     }
@@ -513,7 +579,7 @@ export function createDoorScene(container) {
     if (doorMeshGroup) doorGroup.remove(doorMeshGroup);
     doorMeshGroup = new THREE.Group();
 
-    const baked = bakeDoorTexture(style, colorHex, cols, hasWindow, doorW, doorH, loadedWindowImg, windowLayout, winRowIdx);
+    const baked = bakeDoorTexture(style, colorHex, cols, hasWindow, doorW, doorH, loadedWindowImg, windowLayout, winRowIdx, glassTint);
     const bodyMat = new THREE.MeshPhysicalMaterial({
       map: baked.texture, color: 0xffffff, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
     });
@@ -621,9 +687,14 @@ export function createDoorScene(container) {
       // style where the panel material itself is glass rather than the door's
       // painted color, since that's what makes this line genuinely different
       // from a painted panel door instead of just a different surface pattern.
+      // The pane material itself reflects the picked glass TYPE (Clear/Bronze/
+      // Black/Reflective/Frosted/Mirrored/White) via glassMaterialParamsFor —
+      // every pane on the door retints/refinishes together, no separate overlay.
+      const gp = glassMaterialParamsFor(glassFinish, glassTint);
       const glassMat = new THREE.MeshPhysicalMaterial({
-        color: 0xaebfc7, roughness: 0.05, metalness: 0, transmission: 0.75,
-        thickness: 0.02, ior: 1.45, clearcoat: 0.6, clearcoatRoughness: 0.1, transparent: true, opacity: 0.85
+        color: gp.color, roughness: gp.roughness, metalness: gp.metalness, transmission: gp.transmission,
+        thickness: gp.thickness, ior: gp.ior, clearcoat: gp.clearcoat, clearcoatRoughness: gp.clearcoatRoughness,
+        transparent: gp.transparent, opacity: gp.opacity
       });
       const cellInset = baked.cellW * 0.05;
       for (let r = 0; r < ROWS; r++) {
@@ -660,7 +731,9 @@ export function createDoorScene(container) {
       }
     }
 
-    if (hasWindow) {
+    if (style === 'flush' && sideGlass) {
+      addSideGlassPanels(doorMeshGroup, doorW, doorH, sideGlass, colorHex);
+    } else if (hasWindow) {
       addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols, colorHex);
     }
 

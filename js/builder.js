@@ -164,6 +164,88 @@
     { id: 'center', name: 'Center Row' }
   ];
 
+  // ---------- per-model glass / window option sets ----------
+
+  // Inline SVG builder for glass-type option cards (Glass Garage Door).
+  // Generates a 3 × 3 grid of glass-tinted cells on a dark background.
+  function _makeGlassSvg(fill, opacity, stroke, extra) {
+    let cells = '';
+    for (let r = 0; r < 3; r++)
+      for (let c = 0; c < 3; c++)
+        cells += `<rect x="${5 + c * 25}" y="${5 + r * 17}" width="21" height="13" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="0.5"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><rect width="80" height="56" fill="#0e0e0e"/>${cells}${extra || ''}</svg>`;
+  }
+
+  // 'tint' is the base color baked into every glass pane on the door; 'finish'
+  // tells builder-3d.js which material recipe to use (clear/tinted/frosted/
+  // reflective/mirror) so the 3D preview's actual glass panes match the picked
+  // type instead of always rendering the same default blue-glass look.
+  const GLASS_DOOR_TYPES = [
+    { id: 'glass-clear',      name: 'Clear Glass',                     layout: 'unit', tint: '#b8d4e8', finish: 'clear',
+      svg: _makeGlassSvg('#b8d4e8', 0.35, '#7aaac4', '<line x1="8" y1="5" x2="26" y2="18" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>') },
+    { id: 'glass-bronze',     name: 'Bronze Tinted Glass',             layout: 'unit', tint: '#8a5a1e', finish: 'tinted',
+      svg: _makeGlassSvg('#8a5a1e', 0.7,  '#6a4010', '') },
+    { id: 'glass-black',      name: 'Black Glass',                     layout: 'unit', tint: '#141414', finish: 'tinted',
+      svg: _makeGlassSvg('#040404', 1.0,  '#2a2a2a', '') },
+    { id: 'glass-refl-black', name: 'Reflective Black Tempered Glass', layout: 'unit', tint: '#141414', finish: 'reflective',
+      svg: _makeGlassSvg('#040404', 1.0,  '#2a2a2a',
+        '<line x1="5" y1="5" x2="75" y2="51" stroke="rgba(255,255,255,0.18)" stroke-width="3" stroke-linecap="round"/>' +
+        '<line x1="5" y1="14" x2="48" y2="51" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>') },
+    { id: 'glass-frost',      name: 'Frosted Glass',                   layout: 'unit', tint: '#c8d0d8', finish: 'frosted',
+      svg: _makeGlassSvg('#c8d0d8', 0.6,  '#9aa4ae', '') },
+    { id: 'glass-mirror',     name: 'Mirrored Glass',                  layout: 'unit', tint: '#c0c8d0', finish: 'mirror',
+      svg: (() => {
+        let cells = '';
+        for (let r = 0; r < 3; r++)
+          for (let c = 0; c < 3; c++)
+            cells += `<rect x="${5 + c * 25}" y="${5 + r * 17}" width="21" height="13" fill="url(#gmir)" stroke="#909898" stroke-width="0.5"/>`;
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><defs><linearGradient id="gmir" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#b8c8d4"/><stop offset="40%" stop-color="#e0e8ec"/><stop offset="100%" stop-color="#586068"/></linearGradient></defs><rect width="80" height="56" fill="#0e0e0e"/>${cells}</svg>`;
+      })() },
+    { id: 'glass-white',      name: 'White Glass',                     layout: 'unit', tint: '#e8eaed', finish: 'clear',
+      svg: _makeGlassSvg('#e8eaed', 0.92, '#b4b8bc', '') }
+  ];
+
+  // Modern Flush side-glass options — glass panels placed in a narrow vertical
+  // strip on the LEFT or RIGHT side of the door body (not a top-row window),
+  // always 4 panes stacked in that strip. SVG previews mirror the actual 3D
+  // layout — glassW is kept narrow (thin sidelite strip, not a wide glass block).
+  function _flushSideSvg(side, panels) {
+    const glassW = 12, gap = 2;
+    const doorW = 58;
+    const doorX = side === 'right' ? 4 : 4 + glassW + gap;
+    const glassX = side === 'right' ? doorX + doorW + gap : 4;
+    const paneGap = 3;
+    const slotH = (48 - paneGap * (panels - 1)) / panels;
+    const paneH = slotH * 0.65;
+    let panes = '';
+    for (let i = 0; i < panels; i++) {
+      const y = 4 + i * (slotH + paneGap) + (slotH - paneH) / 2;
+      panes += `<rect x="${glassX}" y="${y}" width="${glassW}" height="${paneH}" fill="rgba(180,214,235,0.38)" stroke="#7aaac4" stroke-width="0.8"/>`;
+    }
+    let seams = '';
+    for (let i = 1; i < 3; i++) {
+      const y = 4 + i * 14.67;
+      seams += `<line x1="${doorX}" y1="${y}" x2="${doorX + doorW}" y2="${y}" stroke="#1c1c1c" stroke-width="1.5"/>`;
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><rect width="80" height="56" fill="#5a5a5a"/><rect x="${doorX}" y="4" width="${doorW}" height="48" fill="#2a2a2a"/>${seams}${panes}</svg>`;
+  }
+  const FLUSH_SIDE_GLASS = [
+    { id: 'flush-side-left-4p',  name: 'Side Glass — Left',  layout: 'unit', side: 'left',  panels: 4, svg: _flushSideSvg('left', 4) },
+    { id: 'flush-side-right-4p', name: 'Side Glass — Right', layout: 'unit', side: 'right', panels: 4, svg: _flushSideSvg('right', 4) }
+  ];
+
+  // Overlay uses only these 6 compatible strip-style window designs.
+  const OVERLAY_WINDOW_IDS = new Set(['wd3008', 'wd3003', 'wd3006', 'wd3005', 'wd3004', 'wd3007']);
+
+  // Keyed by model id — undefined/missing means "use LINES.panel.windows" (full catalog).
+  // Defined here because LINES.panel.windows is already in scope above.
+  const WINDOWS_BY_MODEL = {
+    overlay: LINES.panel.windows.filter((w) => OVERLAY_WINDOW_IDS.has(w.id)),
+    glass: GLASS_DOOR_TYPES,
+    'aluminum-grille': [],
+    'modern-flush': FLUSH_SIDE_GLASS
+  };
+
   const defaultState = () => ({
     line: 'panel',
     size: null, customWidth: '', customHeight: '',
@@ -199,7 +281,25 @@
   // Only Door Styles with a real "Door Styles" section on their own product page
   // (Traditional, Non-Insulated) get this step — see STYLES_BY_MODEL.
   function lineHasStyle(line) { return !!line && currentStyles().length > 1; }
-  function lineHasWindows(line) { return !!line && line.windows.length > 0; }
+
+  // Returns the window/glass-type options for the currently selected model.
+  // Models not listed in WINDOWS_BY_MODEL (Traditional, Non-Insulated) fall back
+  // to the full catalog in LINES.panel.windows.
+  function currentWindows() {
+    const override = WINDOWS_BY_MODEL[state.model];
+    if (override !== undefined) return override;
+    const line = currentLine();
+    return line ? line.windows : [];
+  }
+
+  // Step label for the windows step changes per model (Glass → "Glass Type",
+  // Modern Flush → "Side Glass", everything else → "Windows").
+  const _SECONDARY_LABELS = { glass: 'Glass Type', 'modern-flush': 'Side Glass' };
+  function currentSecondaryLabel() {
+    return _SECONDARY_LABELS[state.model] || (currentLine() ? currentLine().secondaryLabel : 'Windows');
+  }
+
+  function lineHasWindows() { return currentWindows().length > 0; }
   // Carriage Short/Long draw one continuous crossbuck spanning the whole door body —
   // there's no natural "row" to relocate a window into — so the Top/Center choice
   // only applies to Classic Cassette and Raised Ranch.
@@ -218,16 +318,14 @@
     if (lineHasModel(line)) steps.push('model');
     steps.push('style');
     steps.push('color');
-    if (lineHasWindows(line)) steps.push('windows');
+    if (lineHasWindows()) steps.push('windows');
     steps.push('review', 'quote');
     return steps;
   }
 
   function stepLabel(id) {
-    if (id === 'windows') {
-      const line = currentLine();
-      return line ? line.secondaryLabel.toUpperCase() : 'WINDOWS';
-    }
+    if (id === 'windows') return currentSecondaryLabel().toUpperCase();
+
     const STATIC = {
       size: 'SIZE', model: 'PRODUCT LINE', style: 'PANEL DESIGN',
       color: 'COLOR', review: 'REVIEW', quote: 'REQUEST A QUOTE'
@@ -251,7 +349,7 @@
   const findModel = (id) => { const l = currentLine(); return l ? l.models.find((m) => m.id === id) : null; };
   const findStyle = (id) => currentStyles().find((s) => s.id === id);
   const findColor = (id) => currentColors().find((c) => c.id === id);
-  const findWindow = (id) => { const l = currentLine(); return l ? l.windows.find((w) => w.id === id) : null; };
+  const findWindow = (id) => currentWindows().find((w) => w.id === id) || null;
 
   function sizeLabel(s) {
     if (!s.size) return '';
@@ -264,8 +362,7 @@
     return found ? `${found.label} (${found.dims})` : '';
   }
   function windowLabel(s) {
-    const line = currentLine();
-    const label = line ? line.secondaryLabel : 'Windows';
+    const label = currentSecondaryLabel();
     if (!s.windows || s.windows === 'none') return `No ${label.toLowerCase()}`;
     const w = findWindow(s.windows);
     const rowSuffix = styleAllowsWindowRow(s.style)
@@ -319,21 +416,33 @@
   function door3dPayload() {
     const style = findStyle(state.style);
     const color = findColor(state.color);
-    const hasWindow = !!(state.windows && state.windows !== 'none');
-    const windowDef = hasWindow ? findWindow(state.windows) : null;
     // A model with exactly one style (Modern Flush, Aluminum Grille) never
     // shows the Panel Design step at all (see skippableStep()), so state.style
     // is never explicitly set — fall back to that model's own single style
     // pattern instead of always defaulting to 'cassette'.
     const onlyStyle = currentStyles().length === 1 ? currentStyles()[0] : null;
+    const selected = (state.windows && state.windows !== 'none') ? findWindow(state.windows) : null;
+
+    // Glass Garage Door's "windows" step picks a glass TYPE, not a window design —
+    // it must never cut a window row into the door (the whole door is already
+    // glass); it only retints the existing panes. Modern Flush's "windows" step
+    // picks a SIDE-glass layout (left/right strip), also never a top-row cut.
+    // Every other model keeps the normal top-row window behavior.
+    const isGlassModel = state.model === 'glass';
+    const isFlushModel = state.model === 'modern-flush';
+    const hasWindow = !isGlassModel && !isFlushModel && !!selected;
+
     return {
       cols: getCols(),
       style: style ? style.pattern : (onlyStyle ? onlyStyle.pattern : 'cassette'),
       colorHex: color ? color.hex : '#8a8a86',
       hasWindow,
-      windowImg: windowDef ? windowDef.img : null,
-      windowLayout: windowDef ? windowDef.layout : 'unit',
-      windowRow: styleAllowsWindowRow(state.style) ? (state.windowRow || 'top') : 'top'
+      windowImg: hasWindow ? selected.img : null,
+      windowLayout: hasWindow ? selected.layout : 'unit',
+      windowRow: styleAllowsWindowRow(state.style) ? (state.windowRow || 'top') : 'top',
+      glassTint: isGlassModel && selected ? selected.tint : null,
+      glassFinish: isGlassModel && selected ? selected.finish : null,
+      sideGlass: isFlushModel && selected ? { side: selected.side, panels: selected.panels } : null
     };
   }
 
@@ -611,17 +720,14 @@
 
   function renderWindowsStep() {
     const grid = document.getElementById('window-options');
-    const line = currentLine();
-    const items = line ? line.windows : [];
+    const label = currentSecondaryLabel();
+    const items = currentWindows();
     const noneCard = `<button type="button" class="builder-pick" data-pick="windows" data-value="none">
-      ${optionCard({ selected: state.windows === 'none', iconSvg: NO_WINDOW_ICON, title: `No ${line ? line.secondaryLabel : 'Windows'}` })}
+      ${optionCard({ selected: state.windows === 'none', iconSvg: NO_WINDOW_ICON, title: `No ${label.toLowerCase()}` })}
     </button>`;
-    // Every design is always pickable, on any door size — the 3D/schematic preview
-    // stretches or tiles the art to fit whatever width the visitor chose, rather
-    // than gatekeeping which designs are "allowed" on which size.
     const cards = items.map((w) => `
       <button type="button" class="builder-pick" data-pick="windows" data-value="${w.id}">
-        ${optionCard({ selected: state.windows === w.id, imgSrc: w.img, title: w.name, sub: w.code })}
+        ${optionCard({ selected: state.windows === w.id, imgSrc: w.img, iconSvg: w.svg, title: w.name, sub: w.code })}
       </button>`).join('');
     grid.innerHTML = noneCard + cards;
 
@@ -650,7 +756,7 @@
     if (lineHasModel(line)) rows.push(['Product Line', model ? `${model.name}${model.sub ? ` — ${model.sub}` : ''}` : '—']);
     if (lineHasStyle(line)) rows.push(['Panel Design', style ? style.name : '—']);
     rows.push(['Color', color ? `${color.name}${color.code ? ` (${color.code})` : ''}` : '—']);
-    if (lineHasWindows(line)) rows.push([line.secondaryLabel, windowLabel(state)]);
+    if (lineHasWindows()) rows.push([currentSecondaryLabel(), windowLabel(state)]);
     el.innerHTML = rows.map(([k, v]) => `
       <div class="grille-detail-rows"><div class="row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v || '—')}</span></div></div>
     `).join('');
@@ -671,10 +777,11 @@
       const title = section.querySelector('.spec-title');
       const num = String(idx + 1).padStart(2, '0');
       if (kicker) kicker.textContent = `${num} / ${stepLabel(id)}`;
-      if (id === 'windows' && line) {
-        if (title) title.textContent = line.secondaryLabel === 'Windows' ? 'Choose a window option' : `Choose a ${line.secondaryLabel}`;
+      if (id === 'windows') {
+        const lbl = currentSecondaryLabel();
+        if (title) title.textContent = lbl === 'Windows' ? 'Choose a window option' : `Choose a ${lbl.toLowerCase()}`;
         const note = section.querySelector('.window-note');
-        if (note) note.textContent = `Optional — pick the ${line.secondaryLabel.toLowerCase()} for this door.`;
+        if (note) note.textContent = `Optional — pick the ${lbl.toLowerCase()} for this door.`;
       }
     });
   }
@@ -793,12 +900,12 @@
     const color = findColor(state.color);
     const config = {
       lineLabel: line ? line.name : '',
-      secondaryLabel: line ? line.secondaryLabel : 'Windows',
+      secondaryLabel: currentSecondaryLabel(),
       sizeLabel: sizeLabel(state),
       modelLabel: lineHasModel(line) && model ? `${model.name}${model.sub ? ` (${model.sub})` : ''}` : '',
       styleLabel: lineHasStyle(line) && style ? style.name : '',
       colorLabel: color ? `${color.name}${color.code ? ` (${color.code})` : ''}` : '',
-      windowLabel: lineHasWindows(line) ? windowLabel(state) : ''
+      windowLabel: lineHasWindows() ? windowLabel(state) : ''
     };
 
     const submitBtn = document.getElementById('quote-submit-btn');
@@ -872,7 +979,7 @@
         // isn't meaningful under another, so switching Door Style clears both
         // rather than silently carrying over a stale (and possibly invalid)
         // selection.
-        if (field === 'model' && state.model !== value) { state.color = null; state.style = null; }
+        if (field === 'model' && state.model !== value) { state.color = null; state.style = null; state.windows = 'none'; }
         state[field] = value;
         setError(null);
         saveState();
