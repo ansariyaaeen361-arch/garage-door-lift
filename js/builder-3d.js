@@ -420,7 +420,7 @@ function addWindowRow(doorMeshGroup, baked, loadedWindowImg, windowLayout, cols,
 // this doesn't correspond to any cell/row the texture bake carves out — it's a
 // pure overlay on top of the full, uncut flush door body.
 function addSideGlassPanels(doorMeshGroup, doorW, doorH, sideGlass, colorHex) {
-  const { side, panels } = sideGlass;
+  const { side, panels, paneHeightRatio = 0.72 } = sideGlass;
   const doubleDoorW = 8 * CELL_W + 7 * GAP;
   const stripW = Math.min(doorW * 0.4, doubleDoorW * 0.16);
   const marginX = doorW * 0.025;
@@ -430,7 +430,7 @@ function addSideGlassPanels(doorMeshGroup, doorW, doorH, sideGlass, colorHex) {
   const gapY = doorH * 0.02;
   const totalStripH = doorH - marginY * 2;
   const slotH = (totalStripH - gapY * (panels - 1)) / panels;
-  const paneH = slotH * 0.65;
+  const paneH = slotH * paneHeightRatio;
 
   const frameMat = new THREE.MeshPhysicalMaterial({
     color: colorHex || 0xe7e4da, roughness: 0.5, metalness: 0.05, clearcoat: 0.35, clearcoatRoughness: 0.25
