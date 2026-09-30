@@ -209,7 +209,7 @@
   // strip on the LEFT or RIGHT side of the door body (not a top-row window),
   // always 4 panes stacked in that strip. SVG previews mirror the actual 3D
   // layout — glassW is kept narrow (thin sidelite strip, not a wide glass block).
-  function _flushSideSvg(side, panels, paneHeightRatio = 0.72) {
+  function _flushSideSvg(side, panels, paneHeightRatio = 0.933) {
     const glassW = 12, gap = 2;
     const doorW = 58;
     const doorX = side === 'right' ? 4 : 4 + glassW + gap;
@@ -230,10 +230,10 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56"><rect width="80" height="56" fill="#5a5a5a"/><rect x="${doorX}" y="4" width="${doorW}" height="48" fill="#2a2a2a"/>${seams}${panes}</svg>`;
   }
   const FLUSH_SIDE_GLASS = [
-    { id: 'flush-side-left-4p',        name: 'Side Glass — Left',       layout: 'unit', side: 'left',  panels: 4, paneHeightRatio: 0.72, svg: _flushSideSvg('left', 4, 0.72) },
-    { id: 'flush-side-right-4p',       name: 'Side Glass — Right',      layout: 'unit', side: 'right', panels: 4, paneHeightRatio: 0.72, svg: _flushSideSvg('right', 4, 0.72) },
-    { id: 'flush-side-left-short-4p',  name: 'Side Glass — Left Short', layout: 'unit', side: 'left',  panels: 4, paneHeightRatio: 0.747, svg: _flushSideSvg('left', 4, 0.747) },
-    { id: 'flush-side-right-short-4p', name: 'Side Glass — Right Short',layout: 'unit', side: 'right', panels: 4, paneHeightRatio: 0.747, svg: _flushSideSvg('right', 4, 0.747) }
+    { id: 'flush-side-left-4p',        name: 'Side Glass — Left',       layout: 'unit', side: 'left',  panels: 4, paneHeightRatio: 0.933, svg: _flushSideSvg('left', 4, 0.933) },
+    { id: 'flush-side-right-4p',       name: 'Side Glass — Right',      layout: 'unit', side: 'right', panels: 4, paneHeightRatio: 0.933, svg: _flushSideSvg('right', 4, 0.933) },
+    { id: 'flush-side-left-short-4p',  name: 'Side Glass — Left Short', layout: 'unit', side: 'left',  panels: 4, paneHeightRatio: 0.467, svg: _flushSideSvg('left', 4, 0.467) },
+    { id: 'flush-side-right-short-4p', name: 'Side Glass — Right Short',layout: 'unit', side: 'right', panels: 4, paneHeightRatio: 0.467, svg: _flushSideSvg('right', 4, 0.467) }
   ];
 
   // Overlay uses only these 6 compatible strip-style window designs.
